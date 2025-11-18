@@ -1,0 +1,127 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
+
+export default function Settings() {
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [weeklyReports, setWeeklyReports] = useState(false);
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your account settings and preferences
+        </p>
+      </div>
+
+      <div className="space-y-6 max-w-2xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+            <CardDescription>
+              Update your personal information and business details
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input id="name" placeholder="John Doe" defaultValue="John Doe" data-testid="input-name" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="john@example.com" defaultValue="john@example.com" data-testid="input-email" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company">Company Name</Label>
+              <Input id="company" placeholder="Acme Inc." defaultValue="Acme Inc." data-testid="input-company" />
+            </div>
+            <Button data-testid="button-save-profile">Save Changes</Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>
+              Configure how you receive updates and alerts
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="email-notifications">Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive email alerts for agent activity
+                </p>
+              </div>
+              <Switch
+                id="email-notifications"
+                checked={emailNotifications}
+                onCheckedChange={setEmailNotifications}
+                data-testid="switch-email-notifications"
+              />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="weekly-reports">Weekly Reports</Label>
+                <p className="text-sm text-muted-foreground">
+                  Get a weekly summary of agent performance
+                </p>
+              </div>
+              <Switch
+                id="weekly-reports"
+                checked={weeklyReports}
+                onCheckedChange={setWeeklyReports}
+                data-testid="switch-weekly-reports"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>API Keys</CardTitle>
+            <CardDescription>
+              Manage your API keys for integrations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="hubspot-key">HubSpot API Key</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="hubspot-key"
+                  type="password"
+                  placeholder="Enter your HubSpot API key"
+                  className="font-mono"
+                  data-testid="input-hubspot-key"
+                />
+                <Button variant="outline" data-testid="button-save-hubspot-key">Save</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+            <CardDescription>
+              Irreversible actions for your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="destructive" data-testid="button-delete-account">
+              Delete Account
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

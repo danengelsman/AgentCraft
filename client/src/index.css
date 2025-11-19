@@ -2,59 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE */
+/* LIGHT MODE - Premium Luxury Palette */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 0 0% 100%;
-  --foreground: 0 0% 9%;
-  --border: 0 0% 91%;
-  --card: 0 0% 98%;
-  --card-foreground: 0 0% 9%;
-  --card-border: 0 0% 94%;
-  --sidebar: 0 0% 96%;
-  --sidebar-foreground: 0 0% 9%;
-  --sidebar-border: 0 0% 92%;
-  --sidebar-primary: 217 91% 60%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 0 0% 92%;
-  --sidebar-accent-foreground: 0 0% 9%;
-  --sidebar-ring: 217 91% 60%;
-  --popover: 0 0% 94%;
-  --popover-foreground: 0 0% 9%;
-  --popover-border: 0 0% 90%;
-  --primary: 217 91% 60%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 90%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 214 6% 88%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 214 8% 90%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --input: 0 0% 80%;
-  --ring: 217 91% 60%;
-  --chart-1: 217 91% 45%;
-  --chart-2: 173 80% 40%;
-  --chart-3: 197 71% 42%;
-  --chart-4: 43 96% 56%;
-  --chart-5: 27 96% 61%;
-  --font-sans: Inter, sans-serif;
+  
+  /* Core Surfaces */
+  --background: 0 0% 100%;                    /* Pure White */
+  --foreground: 221 39% 11%;                  /* Deep Space Black for text */
+  
+  /* Borders */
+  --border: 210 20% 90%;                      /* Subtle platinum border */
+  
+  /* Cards - Pearl background */
+  --card: 210 20% 98%;                        /* Pearl - elegant card background */
+  --card-foreground: 221 39% 11%;             /* Deep Space Black text */
+  --card-border: 210 20% 92%;                 /* Refined card border */
+  
+  /* Sidebar - Platinum aesthetic */
+  --sidebar: 210 20% 96%;                     /* Platinum Silver */
+  --sidebar-foreground: 221 39% 11%;          /* Deep Space Black */
+  --sidebar-border: 210 20% 90%;              /* Subtle border */
+  --sidebar-primary: 221 83% 53%;             /* Sapphire Blue */
+  --sidebar-primary-foreground: 0 0% 98%;     /* Almost white */
+  --sidebar-accent: 210 20% 92%;              /* Soft accent */
+  --sidebar-accent-foreground: 221 39% 11%;   /* Deep Space Black */
+  --sidebar-ring: 221 83% 53%;                /* Sapphire Blue ring */
+  
+  /* Popovers */
+  --popover: 210 20% 98%;                     /* Pearl */
+  --popover-foreground: 221 39% 11%;          /* Deep Space Black */
+  --popover-border: 210 20% 90%;              /* Subtle border */
+  
+  /* Primary - Sapphire Blue */
+  --primary: 221 83% 53%;                     /* Sapphire Blue signature color */
+  --primary-foreground: 0 0% 98%;             /* Almost white */
+  
+  /* Secondary - Soft Graphite */
+  --secondary: 220 9% 90%;                    /* Light graphite */
+  --secondary-foreground: 221 39% 11%;        /* Deep Space Black */
+  
+  /* Muted - Soft Graphite tones */
+  --muted: 220 9% 92%;                        /* Very light graphite */
+  --muted-foreground: 220 9% 46%;             /* Soft Graphite for secondary text */
+  
+  /* Accent - Subtle platinum */
+  --accent: 210 20% 94%;                      /* Light platinum */
+  --accent-foreground: 221 39% 11%;           /* Deep Space Black */
+  
+  /* Destructive */
+  --destructive: 0 84% 60%;                   /* Red for errors */
+  --destructive-foreground: 0 0% 98%;         /* Almost white */
+  
+  /* Inputs */
+  --input: 210 20% 85%;                       /* Platinum-toned input border */
+  --ring: 221 83% 53%;                        /* Sapphire Blue focus ring */
+  
+  /* Charts - Refined color palette */
+  --chart-1: 221 83% 53%;                     /* Sapphire Blue */
+  --chart-2: 210 20% 60%;                     /* Platinum tone */
+  --chart-3: 220 9% 46%;                      /* Soft Graphite */
+  --chart-4: 200 80% 50%;                     /* Complementary teal */
+  --chart-5: 180 60% 45%;                     /* Complementary cyan */
+  
+  /* Typography */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+  
+  /* Effects */
   --radius: .5rem;
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 2px 4px -1px hsl(0 0% 0% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 4px 6px -1px hsl(0 0% 0% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 8px 10px -1px hsl(0 0% 0% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
+  --shadow-2xs: 0px 1px 2px 0px hsl(221 39% 11% / 0.03);
+  --shadow-xs: 0px 1px 3px 0px hsl(221 39% 11% / 0.05);
+  --shadow-sm: 0px 2px 4px -1px hsl(221 39% 11% / 0.06), 0px 1px 2px -1px hsl(221 39% 11% / 0.04);
+  --shadow: 0px 4px 6px -1px hsl(221 39% 11% / 0.08), 0px 2px 4px -2px hsl(221 39% 11% / 0.05);
+  --shadow-md: 0px 6px 8px -2px hsl(221 39% 11% / 0.10), 0px 4px 6px -2px hsl(221 39% 11% / 0.06);
+  --shadow-lg: 0px 10px 15px -3px hsl(221 39% 11% / 0.12), 0px 6px 8px -4px hsl(221 39% 11% / 0.08);
+  --shadow-xl: 0px 20px 25px -5px hsl(221 39% 11% / 0.14), 0px 10px 15px -5px hsl(221 39% 11% / 0.10);
+  --shadow-2xl: 0px 25px 50px -12px hsl(221 39% 11% / 0.20);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -93,48 +121,74 @@
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-  --background: 0 0% 9%;
-  --foreground: 0 0% 98%;
-  --border: 0 0% 18%;
-  --card: 0 0% 11%;
-  --card-foreground: 0 0% 98%;
-  --card-border: 0 0% 14%;
-  --sidebar: 0 0% 13%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 16%;
-  --sidebar-primary: 217 91% 60%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 0 0% 16%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-ring: 217 91% 60%;
-  --popover: 0 0% 15%;
-  --popover-foreground: 0 0% 98%;
-  --popover-border: 0 0% 18%;
-  --primary: 217 91% 60%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 18%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 214 6% 20%;
-  --muted-foreground: 0 0% 64%;
-  --accent: 214 8% 18%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
-  --input: 0 0% 30%;
-  --ring: 217 91% 60%;
-  --chart-1: 217 91% 70%;
-  --chart-2: 173 80% 65%;
-  --chart-3: 197 71% 68%;
-  --chart-4: 43 96% 70%;
-  --chart-5: 27 96% 72%;
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 2px 4px -1px hsl(0 0% 0% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 4px 6px -1px hsl(0 0% 0% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 8px 10px -1px hsl(0 0% 0% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
+  
+  /* Core Surfaces - Rich luxury dark mode */
+  --background: 221 39% 11%;                  /* Deep Space Black */
+  --foreground: 0 0% 98%;                     /* Almost white - high contrast */
+  
+  /* Borders */
+  --border: 220 13% 20%;                      /* Subtle dark border */
+  
+  /* Cards - Charcoal surfaces */
+  --card: 220 13% 13%;                        /* Charcoal - refined card background */
+  --card-foreground: 0 0% 98%;                /* Almost white */
+  --card-border: 220 13% 18%;                 /* Subtle card border */
+  
+  /* Sidebar - Midnight aesthetic */
+  --sidebar: 221 43% 11%;                     /* Midnight - slightly different from background */
+  --sidebar-foreground: 0 0% 98%;             /* Almost white */
+  --sidebar-border: 220 13% 16%;              /* Very subtle border */
+  --sidebar-primary: 221 83% 60%;             /* Sapphire Blue (slightly brighter in dark) */
+  --sidebar-primary-foreground: 0 0% 98%;     /* Almost white */
+  --sidebar-accent: 220 13% 18%;              /* Subtle accent */
+  --sidebar-accent-foreground: 0 0% 98%;      /* Almost white */
+  --sidebar-ring: 221 83% 60%;                /* Sapphire Blue ring */
+  
+  /* Popovers */
+  --popover: 220 13% 15%;                     /* Dark popover */
+  --popover-foreground: 0 0% 98%;             /* Almost white */
+  --popover-border: 220 13% 20%;              /* Subtle border */
+  
+  /* Primary - Sapphire Blue (brighter in dark mode) */
+  --primary: 221 83% 60%;                     /* Sapphire Blue - slightly brighter for dark mode */
+  --primary-foreground: 0 0% 98%;             /* Almost white */
+  
+  /* Secondary - Dark Graphite */
+  --secondary: 220 9% 22%;                    /* Dark graphite */
+  --secondary-foreground: 0 0% 98%;           /* Almost white */
+  
+  /* Muted - Dark Graphite tones */
+  --muted: 220 9% 20%;                        /* Dark graphite background */
+  --muted-foreground: 220 9% 64%;             /* Medium gray for secondary text */
+  
+  /* Accent - Subtle dark accent */
+  --accent: 210 20% 20%;                      /* Dark platinum accent */
+  --accent-foreground: 0 0% 98%;              /* Almost white */
+  
+  /* Destructive */
+  --destructive: 0 84% 60%;                   /* Red for errors */
+  --destructive-foreground: 0 0% 98%;         /* Almost white */
+  
+  /* Inputs */
+  --input: 220 13% 25%;                       /* Dark input border */
+  --ring: 221 83% 60%;                        /* Sapphire Blue focus ring */
+  
+  /* Charts - Refined dark mode palette */
+  --chart-1: 221 83% 65%;                     /* Sapphire Blue (brighter) */
+  --chart-2: 210 20% 70%;                     /* Platinum tone */
+  --chart-3: 220 9% 60%;                      /* Soft Graphite */
+  --chart-4: 200 80% 60%;                     /* Complementary teal */
+  --chart-5: 180 60% 55%;                     /* Complementary cyan */
+  
+  /* Effects - Subtle shadows in dark mode */
+  --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.20);
+  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --shadow-sm: 0px 2px 4px -1px hsl(0 0% 0% / 0.30), 0px 1px 2px -1px hsl(0 0% 0% / 0.20);
+  --shadow: 0px 4px 6px -1px hsl(0 0% 0% / 0.35), 0px 2px 4px -2px hsl(0 0% 0% / 0.25);
+  --shadow-md: 0px 6px 8px -2px hsl(0 0% 0% / 0.40), 0px 4px 6px -2px hsl(0 0% 0% / 0.30);
+  --shadow-lg: 0px 10px 15px -3px hsl(0 0% 0% / 0.45), 0px 6px 8px -4px hsl(0 0% 0% / 0.35);
+  --shadow-xl: 0px 20px 25px -5px hsl(0 0% 0% / 0.50), 0px 10px 15px -5px hsl(0 0% 0% / 0.40);
+  --shadow-2xl: 0px 25px 50px -12px hsl(0 0% 0% / 0.60);
 
 /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));

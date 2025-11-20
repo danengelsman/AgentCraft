@@ -23,25 +23,21 @@ interface Agent {
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [dismissedOnboarding, setDismissedOnboarding] = useState(false);
 
   // Fetch onboarding progress
   const { data: onboardingProgress } = useQuery<OnboardingProgress | null>({
     queryKey: ['/api/onboarding/progress'],
   });
 
+  // Determine if wizard should show: new users (null) or incomplete onboarding, and not manually dismissed
+  const shouldShowOnboarding = !dismissedOnboarding && onboardingProgress !== undefined && (!onboardingProgress || !onboardingProgress.completedAt);
+
   // Fetch real agents
   const { data: agents = [], isLoading } = useQuery<Agent[]>({
     queryKey: ['/api/agents'],
-    enabled: !!onboardingProgress?.completedAt || !showOnboarding,
+    enabled: !!onboardingProgress?.completedAt || !shouldShowOnboarding,
   });
-
-  // Auto-open wizard for new users (useEffect to avoid render loop)
-  useEffect(() => {
-    if (onboardingProgress && !onboardingProgress.completedAt) {
-      setShowOnboarding(true);
-    }
-  }, [onboardingProgress]);
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -147,13 +143,14 @@ export default function Dashboard() {
     <div>
       {/* Onboarding Wizard for new users */}
       <OnboardingWizard 
-        open={showOnboarding} 
+        open={shouldShowOnboarding}
+        initialProgress={onboardingProgress}
         onComplete={() => {
-          setShowOnboarding(false);
+          setDismissedOnboarding(false);
           queryClient.invalidateQueries({ queryKey: ['/api/onboarding/progress'] });
           queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
         }}
-        onClose={() => setShowOnboarding(false)}
+        onClose={() => setDismissedOnboarding(true)}
       />
 
       <div className="mb-12 flex items-center justify-between flex-wrap gap-4">

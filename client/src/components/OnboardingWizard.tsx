@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import type { OnboardingProgress, User } from "@shared/schema";
 
 interface OnboardingWizardProps {
   open: boolean;
+  initialProgress?: OnboardingProgress | null;
   onComplete: () => void;
   onClose?: () => void;
 }
@@ -67,7 +69,7 @@ const industries = [
   "Other",
 ];
 
-export function OnboardingWizard({ open, onComplete, onClose }: OnboardingWizardProps) {
+export function OnboardingWizard({ open, initialProgress, onComplete, onClose }: OnboardingWizardProps) {
   const [step, setStep] = useState(1);
   const [selectedGoal, setSelectedGoal] = useState<GoalOption | null>(null);
   const [businessName, setBusinessName] = useState("");
@@ -75,6 +77,27 @@ export function OnboardingWizard({ open, onComplete, onClose }: OnboardingWizard
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+
+  // Hydrate from saved progress
+  useEffect(() => {
+    if (!initialProgress || !open) return;
+    
+    // Restore step
+    if (initialProgress.currentStep) {
+      setStep(initialProgress.currentStep);
+    }
+    
+    // Restore wizard data (selected goal)
+    if (initialProgress.wizardData && typeof initialProgress.wizardData === 'object') {
+      const data = initialProgress.wizardData as any;
+      if (data.selectedGoal) {
+        const goal = goalOptions.find(g => g.id === data.selectedGoal);
+        if (goal) setSelectedGoal(goal);
+      }
+      if (data.businessName) setBusinessName(data.businessName);
+      if (data.industry) setIndustry(data.industry);
+    }
+  }, [initialProgress, open]);
 
   // Mutation to save progress between steps
   const saveProgressMutation = useMutation({

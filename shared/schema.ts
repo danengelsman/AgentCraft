@@ -21,6 +21,9 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  businessName: varchar("business_name"),
+  industry: varchar("industry"),
+  goal: text("goal"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -33,6 +36,26 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export type UpsertUser = typeof users.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// Onboarding progress tracking
+export const onboardingProgress = pgTable("onboarding_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  currentStep: integer("current_step").notNull().default(1),
+  completedAt: timestamp("completed_at"),
+  wizardData: jsonb("wizard_data"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertOnboardingProgressSchema = createInsertSchema(onboardingProgress).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertOnboardingProgress = z.infer<typeof insertOnboardingProgressSchema>;
+export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
 
 export const agents = pgTable("agents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -10,11 +10,14 @@ import {
   type InsertMessage,
   type Analytics,
   type InsertAnalytics,
+  type OnboardingProgress,
+  type InsertOnboardingProgress,
   users,
   agents,
   conversations,
   messages,
-  analytics
+  analytics,
+  onboardingProgress
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -23,6 +26,11 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<User>): Promise<User | undefined>;
+
+  // Onboarding
+  getOnboardingProgress(userId: string): Promise<OnboardingProgress | undefined>;
+  upsertOnboardingProgress(progress: InsertOnboardingProgress): Promise<OnboardingProgress>;
 
   // Agents
   getAgent(id: string): Promise<Agent | undefined>;
@@ -66,6 +74,39 @@ export class DbStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async updateUser(id: string, userData: Partial<User>): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Onboarding
+  async getOnboardingProgress(userId: string): Promise<OnboardingProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(onboardingProgress)
+      .where(eq(onboardingProgress.userId, userId));
+    return progress;
+  }
+
+  async upsertOnboardingProgress(progressData: InsertOnboardingProgress): Promise<OnboardingProgress> {
+    const [progress] = await db
+      .insert(onboardingProgress)
+      .values(progressData)
+      .onConflictDoUpdate({
+        target: onboardingProgress.userId,
+        set: {
+          ...progressData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return progress;
   }
 
   // Agents

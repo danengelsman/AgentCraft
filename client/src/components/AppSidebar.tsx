@@ -13,7 +13,6 @@ import {
 import { Bot, LayoutDashboard, Sparkles, BookOpen, Settings, CreditCard } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { ThemeToggle } from "./ThemeToggle";
-import acLogo from "@assets/generated_images/Premium_AC_tech_icon_c803efba.png";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -37,7 +36,9 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
-          <img src={acLogo} alt="AgentCraft" className="w-10 h-10" />
+          <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
+            <Bot className="h-6 w-6 text-primary-foreground" />
+          </div>
           <span className="text-xl font-semibold tracking-tight">AgentCraft</span>
         </div>
       </SidebarHeader>

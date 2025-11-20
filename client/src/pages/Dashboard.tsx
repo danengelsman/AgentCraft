@@ -152,7 +152,8 @@ export default function Dashboard() {
           setShowOnboarding(false);
           queryClient.invalidateQueries({ queryKey: ['/api/onboarding/progress'] });
           queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
-        }} 
+        }}
+        onClose={() => setShowOnboarding(false)}
       />
 
       <div className="mb-12 flex items-center justify-between flex-wrap gap-4">

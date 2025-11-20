@@ -9,7 +9,7 @@ import { useState } from "react";
 import faqIcon from "@assets/generated_images/FAQ_chatbot_template_icon_85fc1675.png";
 import leadIcon from "@assets/generated_images/Lead_qualifier_template_icon_45379e5b.png";
 import schedulerIcon from "@assets/generated_images/Scheduler_template_icon_dab45b38.png";
-import acLogo from "@assets/generated_images/Premium_AC_tech_icon_c803efba.png";
+import acLogo from "@assets/generated_images/Neural_A_letterform_icon_b6a3b7e8.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();

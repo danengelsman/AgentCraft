@@ -13,7 +13,7 @@ import {
 import { Bot, LayoutDashboard, Sparkles, BookOpen, Settings, CreditCard } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { ThemeToggle } from "./ThemeToggle";
-import acLogo from "@assets/generated_images/Neural_A_letterform_icon_b6a3b7e8.png";
+import acLogo from "@assets/IMG_0009_1763658765341.png";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },

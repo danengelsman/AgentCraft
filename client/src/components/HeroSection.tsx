@@ -7,7 +7,7 @@ export function HeroSection() {
   const [, setLocation] = useLocation();
   
   return (
-    <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
+    <section className="relative h-[85vh] pt-16 flex items-center justify-center overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}

@@ -1,14 +1,17 @@
 import { StatCard } from "@/components/StatCard";
 import { AgentCard } from "@/components/AgentCard";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Bot, TrendingUp, Clock, Plus, Sparkles, Settings, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import faqIcon from "@assets/generated_images/FAQ_chatbot_template_icon_85fc1675.png";
 import leadIcon from "@assets/generated_images/Lead_qualifier_template_icon_45379e5b.png";
+import type { OnboardingProgress } from "@shared/schema";
 
 interface Agent {
   id: string;
@@ -20,11 +23,25 @@ interface Agent {
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Fetch onboarding progress
+  const { data: onboardingProgress } = useQuery<OnboardingProgress | null>({
+    queryKey: ['/api/onboarding/progress'],
+  });
 
   // Fetch real agents
   const { data: agents = [], isLoading } = useQuery<Agent[]>({
     queryKey: ['/api/agents'],
+    enabled: !!onboardingProgress?.completedAt || !showOnboarding,
   });
+
+  // Auto-open wizard for new users (useEffect to avoid render loop)
+  useEffect(() => {
+    if (onboardingProgress && !onboardingProgress.completedAt) {
+      setShowOnboarding(true);
+    }
+  }, [onboardingProgress]);
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -128,6 +145,16 @@ export default function Dashboard() {
 
   return (
     <div>
+      {/* Onboarding Wizard for new users */}
+      <OnboardingWizard 
+        open={showOnboarding} 
+        onComplete={() => {
+          setShowOnboarding(false);
+          queryClient.invalidateQueries({ queryKey: ['/api/onboarding/progress'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
+        }} 
+      />
+
       <div className="mb-12 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-5xl font-semibold mb-3 tracking-tight">Dashboard</h1>

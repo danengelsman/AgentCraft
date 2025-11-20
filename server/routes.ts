@@ -103,6 +103,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/onboarding/progress - Get user's onboarding progress
+  app.get('/api/onboarding/progress', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const progress = await storage.getOnboardingProgress(userId);
+      res.json(progress || null);
+    } catch (error) {
+      console.error("Error fetching onboarding progress:", error);
+      res.status(500).json({ message: "Failed to fetch onboarding progress" });
+    }
+  });
+
+  // PUT /api/onboarding/progress - Update onboarding progress
+  app.put('/api/onboarding/progress', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { currentStep, wizardData, businessName, industry, goal } = req.body;
+
+      // Update user profile if provided
+      if (businessName || industry || goal) {
+        await storage.updateUser(userId, {
+          businessName,
+          industry,
+          goal,
+        });
+      }
+
+      // Update onboarding progress
+      const progress = await storage.upsertOnboardingProgress({
+        userId,
+        currentStep,
+        wizardData,
+      });
+
+      res.json(progress);
+    } catch (error) {
+      console.error("Error updating onboarding progress:", error);
+      res.status(500).json({ message: "Failed to update onboarding progress" });
+    }
+  });
+
+  // POST /api/onboarding/complete - Complete onboarding and create first agent
+  app.post('/api/onboarding/complete', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { templateId, businessName, industry, goal } = req.body;
+
+      // Find the template
+      const template = templates.find(t => t.id === templateId);
+      if (!template) {
+        return res.status(400).json({ error: "Invalid template" });
+      }
+
+      // Update user profile
+      await storage.updateUser(userId, {
+        businessName,
+        industry,
+        goal,
+      });
+
+      // Create the first agent
+      const agentName = `${businessName || 'My'} ${template.name}`;
+      const systemPrompt = getSystemPromptForTemplate(
+        template.name,
+        agentName,
+        `AI agent for ${businessName || 'my business'} - ${goal || template.description}`
+      );
+
+      const agent = await storage.createAgent({
+        userId,
+        name: agentName,
+        description: `AI agent for ${businessName || 'my business'} - ${goal || template.description}`,
+        template: templateId,
+        systemPrompt,
+        status: "active",
+      });
+
+      // Mark onboarding as complete
+      await storage.upsertOnboardingProgress({
+        userId,
+        currentStep: 3,
+        completedAt: new Date(),
+        wizardData: { templateId, businessName, industry, goal },
+      });
+
+      res.json({ agent, success: true });
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      res.status(500).json({ message: "Failed to complete onboarding" });
+    }
+  });
+
   // GET /api/templates - List all available templates
   app.get("/api/templates", (req, res) => {
     res.json(templates);

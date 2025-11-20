@@ -1,27 +1,30 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useLocation } from "wouter";
 import heroImage from "@assets/generated_images/Hero_image_business_owner_3e33f279.png";
 
 export function HeroSection() {
+  const [, setLocation] = useLocation();
+  
   return (
-    <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
+    <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/60 to-black/40" />
       
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-sm border border-primary/30 text-white mb-6">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 text-center">
+        <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white mb-8">
           <Sparkles className="h-4 w-4" />
           <span className="text-sm font-medium">Trusted by 500+ Small Businesses</span>
         </div>
         
-        <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+        <h1 className="text-6xl md:text-7xl font-light text-white mb-8 leading-tight tracking-tight">
           Automate Your Business<br />Without the Complexity
         </h1>
         
-        <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+        <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
           Create powerful AI agents in minutes with our guided templates. No coding required.
           Perfect for small businesses ready to scale.
         </p>
@@ -29,7 +32,8 @@ export function HeroSection() {
         <div className="flex flex-wrap gap-4 justify-center">
           <Button
             size="lg"
-            className="bg-white/90 backdrop-blur-sm text-foreground hover:bg-white border-2 border-white/20"
+            className="h-12 px-8 text-base shadow-xl"
+            onClick={() => setLocation('/dashboard')}
             data-testid="button-get-started"
           >
             Get Started Free
@@ -38,7 +42,10 @@ export function HeroSection() {
           <Button
             size="lg"
             variant="outline"
-            className="bg-transparent backdrop-blur-sm text-white border-2 border-white/30 hover:bg-white/10"
+            className="bg-white/5 backdrop-blur-md text-white border-2 border-white/30 hover:bg-white/15 h-12 px-8 text-base"
+            onClick={() => {
+              document.getElementById('templates')?.scrollIntoView({ behavior: 'smooth' });
+            }}
             data-testid="button-view-templates"
           >
             View Templates

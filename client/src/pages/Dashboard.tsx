@@ -44,33 +44,33 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-12 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-5xl font-semibold mb-3 tracking-tight">Dashboard</h1>
+          <p className="text-lg text-muted-foreground">
             Welcome back! Here's an overview of your agent performance.
           </p>
         </div>
-        <Button onClick={() => setLocation('/templates')} data-testid="button-create-agent">
-          <Plus className="mr-2 h-4 w-4" />
+        <Button size="lg" onClick={() => setLocation('/templates')} data-testid="button-create-agent">
+          <Plus className="mr-2 h-5 w-5" />
           Create Agent
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
         {stats.map((stat) => (
           <StatCard key={stat.title} {...stat} />
         ))}
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Your Agents</h2>
-        <Button variant="outline" size="sm" onClick={() => setLocation('/agents')} data-testid="button-view-all">
+      <div className="mb-8 flex items-center justify-between">
+        <h2 className="text-3xl font-semibold tracking-tight">Your Agents</h2>
+        <Button variant="outline" onClick={() => setLocation('/agents')} data-testid="button-view-all">
           View All
         </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {agents.map((agent) => (
           <AgentCard
             key={agent.id}

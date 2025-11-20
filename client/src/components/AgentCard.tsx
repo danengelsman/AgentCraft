@@ -27,15 +27,15 @@ export function AgentCard({ id, name, description, status, icon, onEdit, onDelet
   const statusInfo = statusConfig[status];
   
   return (
-    <Card className="hover-elevate overflow-visible" data-testid={`card-agent-${id}`}>
-      <CardHeader>
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <img src={icon} alt={name} className="w-8 h-8 object-contain" />
+    <Card className="hover-elevate overflow-visible shadow-sm" data-testid={`card-agent-${id}`}>
+      <CardHeader className="p-6">
+        <div className="flex items-start gap-5">
+          <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <img src={icon} alt={name} className="w-9 h-9 object-contain" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <CardTitle className="text-lg">{name}</CardTitle>
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <CardTitle className="text-xl font-semibold tracking-tight">{name}</CardTitle>
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${statusInfo.color}`} data-testid={`status-indicator-${status}`} />
                 <Badge variant="secondary" className="text-xs" data-testid={`badge-status-${status}`}>
@@ -43,14 +43,13 @@ export function AgentCard({ id, name, description, status, icon, onEdit, onDelet
                 </Badge>
               </div>
             </div>
-            <CardDescription className="line-clamp-2">{description}</CardDescription>
+            <CardDescription className="line-clamp-2 leading-relaxed">{description}</CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2 flex-wrap">
+      <CardContent className="px-6 pb-6">
+        <div className="flex items-center gap-3 flex-wrap">
           <Button
-            size="sm"
             variant="outline"
             onClick={onEdit}
             data-testid={`button-edit-${id}`}
@@ -59,7 +58,6 @@ export function AgentCard({ id, name, description, status, icon, onEdit, onDelet
             Edit
           </Button>
           <Button
-            size="sm"
             variant="outline"
             onClick={onDelete}
             data-testid={`button-delete-${id}`}

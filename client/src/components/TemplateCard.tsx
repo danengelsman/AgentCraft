@@ -13,24 +13,25 @@ interface TemplateCardProps {
 
 export function TemplateCard({ title, description, icon, tier, onStart }: TemplateCardProps) {
   return (
-    <Card className="hover-elevate overflow-visible" data-testid={`card-template-${title.toLowerCase().replace(/\s+/g, '-')}`}>
-      <CardHeader className="gap-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <img src={icon} alt={title} className="w-8 h-8 object-contain" />
+    <Card className="hover-elevate overflow-visible shadow-sm" data-testid={`card-template-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+      <CardHeader className="gap-6 p-8">
+        <div className="flex items-start justify-between gap-3">
+          <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <img src={icon} alt={title} className="w-9 h-9 object-contain" />
           </div>
           <Badge variant={tier === "free" ? "secondary" : "default"} data-testid={`badge-tier-${tier}`}>
             {tier === "free" ? "Free" : "Pro"}
           </Badge>
         </div>
         <div>
-          <CardTitle className="text-lg mb-2">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardTitle className="text-xl mb-3 font-semibold tracking-tight">{title}</CardTitle>
+          <CardDescription className="leading-relaxed">{description}</CardDescription>
         </div>
       </CardHeader>
-      <CardFooter>
+      <CardFooter className="p-8 pt-0">
         <Button 
           className="w-full" 
+          size="lg"
           onClick={onStart}
           data-testid={`button-start-${title.toLowerCase().replace(/\s+/g, '-')}`}
         >

@@ -1,20 +1,34 @@
 import { AgentCard } from "@/components/AgentCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Search, Copy } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import faqIcon from "@assets/generated_images/FAQ_chatbot_template_icon_85fc1675.png";
 import leadIcon from "@assets/generated_images/Lead_qualifier_template_icon_45379e5b.png";
 import schedulerIcon from "@assets/generated_images/Scheduler_template_icon_dab45b38.png";
+import emailIcon from "@assets/stock_images/email_automation_cus_8833c327.jpg";
+import reviewIcon from "@assets/stock_images/customer_reviews_fee_bc6ce8ea.jpg";
 import emptyImage from "@assets/generated_images/Empty_state_no_agents_512ad97b.png";
 
 export default function Agents() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const { toast } = useToast();
+
+  const handleCloneAgent = (agentTitle: string) => {
+    toast({
+      title: "Agent Cloned Successfully",
+      description: `"${agentTitle}" has been added to your agents. You can customize it in the Templates page.`,
+    });
+    // In a real implementation, this would create a new agent based on the template
+    setTimeout(() => setLocation('/templates'), 1500);
+  };
 
   // todo: remove mock functionality
   const agents = [
@@ -45,6 +59,45 @@ export default function Agents() {
       description: "Helps customers book appointments and manage calendars",
       status: "draft" as const,
       icon: schedulerIcon,
+    },
+  ];
+
+  // todo: remove mock functionality
+  const exampleAgents = [
+    {
+      id: "example-1",
+      title: "E-commerce Support Agent",
+      description: "Handles order status, returns, and product questions for online stores. Trained on common e-commerce scenarios.",
+      icon: faqIcon,
+      metrics: "94% resolution rate • 2.1s avg response",
+    },
+    {
+      id: "example-2",
+      title: "Real Estate Lead Bot",
+      description: "Qualifies property inquiries, schedules showings, and syncs leads to CRM. Perfect for real estate agents.",
+      icon: leadIcon,
+      metrics: "30% higher conversion • 15hrs saved/week",
+    },
+    {
+      id: "example-3",
+      title: "Healthcare Appointment Manager",
+      description: "Schedules appointments, sends reminders, and handles rescheduling for medical practices.",
+      icon: schedulerIcon,
+      metrics: "40% fewer no-shows • HIPAA compliant",
+    },
+    {
+      id: "example-4",
+      title: "SaaS Onboarding Assistant",
+      description: "Guides new users through product setup with personalized tutorials and answers technical questions.",
+      icon: emailIcon,
+      metrics: "25% faster onboarding • 90% satisfaction",
+    },
+    {
+      id: "example-5",
+      title: "Restaurant Review Manager",
+      description: "Monitors and responds to reviews on Google, Yelp, and social media with branded responses.",
+      icon: reviewIcon,
+      metrics: "5-star rating boost • 100% review coverage",
     },
   ];
 
@@ -91,16 +144,56 @@ export default function Agents() {
             </Select>
           </div>
 
-          <div className="space-y-4">
-            {agents.map((agent) => (
-              <AgentCard
-                key={agent.id}
-                {...agent}
-                onEdit={() => console.log('Edit agent:', agent.id)}
-                onDelete={() => console.log('Delete agent:', agent.id)}
-                onToggleActive={(active) => console.log('Toggle agent:', agent.id, active)}
-              />
-            ))}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold tracking-tight mb-4">Your Agents</h2>
+            <div className="space-y-4">
+              {agents.map((agent) => (
+                <AgentCard
+                  key={agent.id}
+                  {...agent}
+                  onEdit={() => console.log('Edit agent:', agent.id)}
+                  onDelete={() => console.log('Delete agent:', agent.id)}
+                  onToggleActive={(active) => console.log('Toggle agent:', agent.id, active)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Example Agents */}
+          <div className="mb-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold tracking-tight mb-2">Example Agents</h2>
+              <p className="text-muted-foreground">
+                Clone these pre-built agents and customize them for your business
+              </p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {exampleAgents.map((example) => (
+                <Card key={example.id} className="hover-elevate" data-testid={`example-agent-${example.id}`}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <img src={example.icon} alt={example.title} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <h3 className="font-semibold text-lg">{example.title}</h3>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => handleCloneAgent(example.title)}
+                            data-testid={`button-clone-${example.id}`}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Clone
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">{example.description}</p>
+                        <div className="text-xs text-primary font-medium">{example.metrics}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </>
       ) : (

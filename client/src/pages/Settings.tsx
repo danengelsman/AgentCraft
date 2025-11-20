@@ -86,14 +86,17 @@ export default function Settings() {
 
         <Card>
           <CardHeader>
-            <CardTitle>API Keys</CardTitle>
+            <CardTitle>Integrations</CardTitle>
             <CardDescription>
-              Manage your API keys for integrations
+              Connect AgentCraft with your favorite tools
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="hubspot-key">HubSpot API Key</Label>
+              <Label htmlFor="hubspot-key">HubSpot CRM</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Sync leads and contacts with your HubSpot account
+              </p>
               <div className="flex gap-2">
                 <Input
                   id="hubspot-key"
@@ -103,6 +106,94 @@ export default function Settings() {
                   data-testid="input-hubspot-key"
                 />
                 <Button variant="outline" data-testid="button-save-hubspot-key">Save</Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="calendly-key">Calendly</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Enable appointment scheduling with Calendly integration
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  id="calendly-key"
+                  type="password"
+                  placeholder="Enter your Calendly API key"
+                  className="font-mono"
+                  data-testid="input-calendly-key"
+                />
+                <Button variant="outline" data-testid="button-save-calendly-key">Save</Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="slack-webhook">Slack</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Send agent notifications to your Slack workspace
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  id="slack-webhook"
+                  type="password"
+                  placeholder="Enter your Slack webhook URL"
+                  className="font-mono"
+                  data-testid="input-slack-webhook"
+                />
+                <Button variant="outline" data-testid="button-save-slack-webhook">Save</Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="gmail-oauth">Gmail</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Connect Gmail for email automation agents
+              </p>
+              <Button variant="outline" className="w-full" data-testid="button-connect-gmail">
+                Connect Gmail Account
+              </Button>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="stripe-key">Stripe</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Process payments and send invoice reminders
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  id="stripe-key"
+                  type="password"
+                  placeholder="Enter your Stripe API key"
+                  className="font-mono"
+                  data-testid="input-stripe-key"
+                />
+                <Button variant="outline" data-testid="button-save-stripe-key">Save</Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="zapier-webhook">Zapier</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Trigger Zapier workflows from your agents
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  id="zapier-webhook"
+                  type="password"
+                  placeholder="Enter your Zapier webhook URL"
+                  className="font-mono"
+                  data-testid="input-zapier-webhook"
+                />
+                <Button variant="outline" data-testid="button-save-zapier-webhook">Save</Button>
               </div>
             </div>
           </CardContent>

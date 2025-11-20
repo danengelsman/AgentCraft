@@ -23,6 +23,7 @@ const mainItems = [
 
 const learnItems = [
   { title: "Tutorials", url: "/tutorials", icon: BookOpen },
+  { title: "Resources", url: "/resources", icon: BookOpen },
 ];
 
 const settingsItems = [

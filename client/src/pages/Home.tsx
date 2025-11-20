@@ -9,6 +9,15 @@ import { useState } from "react";
 import faqIcon from "@assets/generated_images/FAQ_chatbot_template_icon_85fc1675.png";
 import leadIcon from "@assets/generated_images/Lead_qualifier_template_icon_45379e5b.png";
 import schedulerIcon from "@assets/generated_images/Scheduler_template_icon_dab45b38.png";
+import emailIcon from "@assets/stock_images/email_automation_cus_8833c327.jpg";
+import socialIcon from "@assets/stock_images/social_media_marketi_93d81dac.jpg";
+import onboardingIcon from "@assets/stock_images/customer_onboarding__caa841da.jpg";
+import productIcon from "@assets/stock_images/product_recommendati_fe0ba6d2.jpg";
+import salesIcon from "@assets/stock_images/sales_outreach_busin_f61c5b92.jpg";
+import meetingIcon from "@assets/stock_images/meeting_notes_summar_5c7d7275.jpg";
+import reviewIcon from "@assets/stock_images/customer_reviews_fee_bc6ce8ea.jpg";
+import feedbackIcon from "@assets/stock_images/survey_feedback_coll_e93c68ca.jpg";
+import invoiceIcon from "@assets/stock_images/invoice_payment_remi_98c7af8f.jpg";
 import acLogo from "@assets/IMG_0009_1763658765341.png";
 
 export default function Home() {
@@ -33,6 +42,60 @@ export default function Home() {
       title: "Appointment Scheduler",
       description: "Let customers book appointments directly through chat with calendar integration.",
       icon: schedulerIcon,
+      tier: "pro" as const,
+    },
+    {
+      title: "Email Responder",
+      description: "Auto-respond to common customer emails with personalized, contextual replies based on your knowledge base.",
+      icon: emailIcon,
+      tier: "pro" as const,
+    },
+    {
+      title: "Social Media Manager",
+      description: "Schedule posts and respond to messages across platforms. Maintain consistent brand voice automatically.",
+      icon: socialIcon,
+      tier: "pro" as const,
+    },
+    {
+      title: "Customer Onboarding",
+      description: "Guide new customers through setup with automated welcome sequences and helpful tutorials.",
+      icon: onboardingIcon,
+      tier: "free" as const,
+    },
+    {
+      title: "Product Recommender",
+      description: "Suggest the right products to customers based on their needs, preferences, and browsing history.",
+      icon: productIcon,
+      tier: "pro" as const,
+    },
+    {
+      title: "Sales Outreach",
+      description: "Create personalized cold outreach sequences that adapt based on prospect responses and engagement.",
+      icon: salesIcon,
+      tier: "pro" as const,
+    },
+    {
+      title: "Meeting Summarizer",
+      description: "Automatically capture meeting notes, action items, and key decisions. Share summaries instantly.",
+      icon: meetingIcon,
+      tier: "free" as const,
+    },
+    {
+      title: "Review Responder",
+      description: "Reply to Google, Yelp, and social media reviews automatically with personalized, on-brand responses.",
+      icon: reviewIcon,
+      tier: "pro" as const,
+    },
+    {
+      title: "Feedback Collector",
+      description: "Survey customers at the right moments and gather actionable insights to improve your business.",
+      icon: feedbackIcon,
+      tier: "free" as const,
+    },
+    {
+      title: "Invoice Reminder",
+      description: "Send friendly payment reminders for outstanding invoices. Escalate automatically for overdue accounts.",
+      icon: invoiceIcon,
       tier: "pro" as const,
     },
   ];

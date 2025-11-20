@@ -33,17 +33,28 @@ The application implements a premium luxury design system inspired by Apple's pr
 **Component Architecture:**
 - Reusable UI components in `client/src/components/ui/` (30+ Shadcn components)
 - Business components in `client/src/components/` (AgentCard, TemplateCard, ChatMessage, etc.)
-- Page components in `client/src/pages/` (Dashboard, Agents, Templates, Chat, etc.)
+- Page components in `client/src/pages/` (Home, Dashboard, Agents, Templates, Chat, Tutorials, Resources, Subscription, Settings)
 - Custom hooks in `client/src/hooks/` for mobile detection and toast notifications
 
+**Recent Updates (November 2024):**
+- Expanded templates from 3 to 12 total, covering comprehensive business automation use cases
+- Enriched Dashboard with Recharts visualizations (area charts for conversations, line charts for response times)
+- Added recent activity feed showing agent interactions with success/warning status indicators
+- Created Resources/Learning page with video tutorials, use case guides, best practices, and success stories
+- Expanded integrations beyond HubSpot to include Calendly, Slack, Gmail, Stripe, and Zapier
+- Added 5 pre-built example agents to Agent Gallery with performance metrics and clone functionality
+- Implemented comprehensive mobile optimization with hamburger navigation, responsive typography (4xl→7xl scaling), and touch-friendly interfaces
+- Updated branding to use custom neural network "A" logo (blue metallic with silver circular frame)
+
 **Key Features:**
-- Dashboard with agent statistics and quick actions
-- Agent gallery for managing multiple AI agents
-- Template marketplace for pre-built solution templates
-- Chat interface for testing and interacting with agents
-- Tutorial system for user onboarding
-- Subscription/pricing management
-- Settings and user preferences
+- **Dashboard**: Rich analytics with performance charts (conversation volume, response time trends using Recharts), recent activity feed, quick action cards, and usage tracking with visual progress bars
+- **Agent Gallery**: Manages user agents with search/filter functionality, plus 5 pre-built example agents (E-commerce Support, Real Estate Lead Bot, Healthcare Appointment Manager, SaaS Onboarding, Restaurant Review Manager) that users can clone
+- **Template Marketplace**: 12 comprehensive solution templates including Website FAQ Chatbot, Lead Qualification, Appointment Scheduler, Email Responder, Social Media Manager, Customer Onboarding, Product Recommender, Sales Outreach, Meeting Summarizer, Review Responder, Feedback Collector, and Invoice Reminder
+- **Resources & Learning**: Dedicated page with video tutorials, use case guides, best practices documentation, and success stories from businesses using the platform
+- **Chat Interface**: For testing and interacting with agents
+- **Tutorial System**: For user onboarding
+- **Subscription/Pricing**: Free tier (1 agent, 100 msgs/month) and Pro tier ($49/month, 10 agents, unlimited messages)
+- **Settings & Integrations**: User preferences plus integration management for HubSpot CRM, Calendly, Slack, Gmail, Stripe, and Zapier
 
 ### Backend Architecture
 
@@ -114,10 +125,14 @@ The current schema is minimal. The application will need additional tables for:
 - TSX for TypeScript execution in development
 - PostCSS with Autoprefixer for CSS processing
 
-**Planned Integrations:**
-- HubSpot CRM integration for lead management and contact synchronization
-- Calendar integration for appointment scheduling agents
-- AI/LLM services for agent intelligence (not yet implemented)
+**Integrations:**
+- **HubSpot CRM**: For lead management and contact synchronization
+- **Calendly**: Appointment scheduling integration
+- **Slack**: Agent notifications to Slack workspace
+- **Gmail**: Email automation via OAuth
+- **Stripe**: Payment processing and invoice reminders
+- **Zapier**: Trigger workflows from agents
+- **OpenAI**: AI/LLM services for agent intelligence (configured)
 
 **Build and Deployment:**
 - Development: Concurrent Vite dev server + TSX server execution

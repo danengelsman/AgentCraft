@@ -13,6 +13,7 @@ import Agents from "@/pages/Agents";
 import Templates from "@/pages/Templates";
 import Chat from "@/pages/Chat";
 import Tutorials from "@/pages/Tutorials";
+import Resources from "@/pages/Resources";
 import Subscription from "@/pages/Subscription";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
@@ -77,6 +78,13 @@ function Router() {
         {() => (
           <DashboardLayout>
             <Tutorials />
+          </DashboardLayout>
+        )}
+      </Route>
+      <Route path="/resources">
+        {() => (
+          <DashboardLayout>
+            <Resources />
           </DashboardLayout>
         )}
       </Route>

@@ -2,12 +2,14 @@ import { TutorialCard } from "@/components/TutorialCard";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
 import { useState } from "react";
 
 export default function Tutorials() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState("all");
+  const { toast } = useToast();
 
   // todo: remove mock functionality
   const tutorials = [
@@ -102,7 +104,12 @@ export default function Tutorials() {
               <TutorialCard
                 key={tutorial.title}
                 {...tutorial}
-                onStart={() => console.log('Start tutorial:', tutorial.title)}
+                onStart={() => {
+                  toast({
+                    title: "Tutorial Starting",
+                    description: `Loading "${tutorial.title}"...`,
+                  });
+                }}
               />
             ))}
           </div>

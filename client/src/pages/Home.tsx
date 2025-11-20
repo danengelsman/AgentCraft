@@ -1,7 +1,7 @@
 import { HeroSection } from "@/components/HeroSection";
 import { TemplateCard } from "@/components/TemplateCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Users, Zap, Shield, Menu, Bot } from "lucide-react";
+import { ArrowRight, CheckCircle2, Users, Zap, Shield, Menu } from "lucide-react";
 import { useLocation } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -9,6 +9,7 @@ import { useState } from "react";
 import faqIcon from "@assets/generated_images/FAQ_chatbot_template_icon_85fc1675.png";
 import leadIcon from "@assets/generated_images/Lead_qualifier_template_icon_45379e5b.png";
 import schedulerIcon from "@assets/generated_images/Scheduler_template_icon_dab45b38.png";
+import acLogo from "@assets/generated_images/Premium_AC_tech_icon_c803efba.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -59,9 +60,7 @@ export default function Home() {
       <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
-              <Bot className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src={acLogo} alt="AgentCraft" className="w-10 h-10" />
             <span className="text-lg sm:text-xl font-semibold tracking-tight">AgentCraft</span>
           </div>
           

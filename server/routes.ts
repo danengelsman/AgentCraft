@@ -132,8 +132,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/agents - Create a new agent
   app.post("/api/agents", async (req, res) => {
     try {
+      const { name, description, template, status } = req.body;
+
+      // Get the template to find the correct name for system prompt
+      const templateData = templates.find(t => t.id === template);
+      if (!templateData) {
+        return res.status(400).json({ error: "Invalid template" });
+      }
+
+      // Generate system prompt based on template
+      const systemPrompt = getSystemPromptForTemplate(
+        templateData.name,
+        name,
+        description
+      );
+
       const agentData = insertAgentSchema.parse({
-        ...req.body,
+        name,
+        description,
+        template,
+        systemPrompt,
+        status: status || "active",
         userId: req.user!.id,
       });
 
@@ -302,9 +321,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         conversationId: conversation.id,
         message: assistantMessage,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
-      res.status(500).json({ error: "Failed to process message" });
+      
+      // Handle OpenAI API errors specifically
+      if (error?.error?.code === "insufficient_quota" || error?.status === 429) {
+        return res.status(503).json({ 
+          error: "OpenAI API quota exceeded. Please add credits to your OpenAI account or try again later.",
+          type: "quota_exceeded"
+        });
+      }
+      
+      if (error?.error?.type === "invalid_request_error") {
+        return res.status(400).json({ 
+          error: "Invalid request to AI service. Please try a different message.",
+          type: "invalid_request"
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "Failed to generate response. Please try again.",
+        type: "unknown"
+      });
     }
   });
 

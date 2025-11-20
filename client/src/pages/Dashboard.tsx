@@ -4,112 +4,101 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Bot, TrendingUp, Clock, Plus, Sparkles, Settings, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import faqIcon from "@assets/generated_images/FAQ_chatbot_template_icon_85fc1675.png";
 import leadIcon from "@assets/generated_images/Lead_qualifier_template_icon_45379e5b.png";
 
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  template: string;
+}
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
 
-  // todo: remove mock functionality
+  // Fetch real agents
+  const { data: agents = [], isLoading } = useQuery<Agent[]>({
+    queryKey: ['/api/agents'],
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/agents/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
+    },
+  });
+
+  // Toggle status mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/agents/${id}`, {
+        status: active ? "active" : "inactive",
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
+    },
+  });
+
+  // Map template IDs to icons
+  const iconMap: Record<string, string> = {
+    "website-faq": faqIcon,
+    "lead-qualification": leadIcon,
+    "appointment-scheduler": faqIcon,
+    "email-responder": faqIcon,
+    "social-media-manager": faqIcon,
+    "customer-onboarding": faqIcon,
+    "product-recommender": faqIcon,
+    "sales-outreach": leadIcon,
+    "meeting-summarizer": faqIcon,
+    "review-responder": faqIcon,
+    "feedback-collector": faqIcon,
+    "invoice-reminder": faqIcon,
+  };
+
+  // Calculate stats from real agent data
+  const activeAgents = agents.filter(a => a.status === "active").length;
+  const totalAgents = agents.length;
+
   const stats = [
-    { title: "Total Messages", value: "2,847", icon: MessageSquare, trend: { value: "+12% from last month", isPositive: true } },
-    { title: "Active Agents", value: "3", icon: Bot },
-    { title: "Success Rate", value: "94%", icon: TrendingUp, trend: { value: "+5% from last month", isPositive: true } },
-    { title: "Avg Response Time", value: "1.2s", icon: Clock },
+    { title: "Total Agents", value: totalAgents.toString(), icon: Bot },
+    { title: "Active Agents", value: activeAgents.toString(), icon: MessageSquare },
+    { title: "Ready to Chat", value: activeAgents > 0 ? "Yes" : "No", icon: TrendingUp },
+    { title: "Response Time", value: "Instant", icon: Clock },
   ];
 
-  // todo: remove mock functionality
-  const agents = [
-    {
-      id: "1",
-      name: "Customer Support Bot",
-      description: "Handles common customer inquiries and routes complex issues to human agents",
-      status: "active" as const,
-      icon: faqIcon,
-    },
-    {
-      id: "2",
-      name: "Lead Qualifier",
-      description: "Qualifies incoming leads from the website and syncs to HubSpot",
-      status: "active" as const,
-      icon: leadIcon,
-    },
-    {
-      id: "3",
-      name: "FAQ Assistant",
-      description: "Answers frequently asked questions about products and services",
-      status: "inactive" as const,
-      icon: faqIcon,
-    },
-  ];
-
-  // todo: remove mock functionality
+  // Placeholder data for charts (will be real data once we have conversation history)
   const conversationData = [
-    { day: "Mon", conversations: 45 },
-    { day: "Tue", conversations: 52 },
-    { day: "Wed", conversations: 48 },
-    { day: "Thu", conversations: 61 },
-    { day: "Fri", conversations: 55 },
-    { day: "Sat", conversations: 38 },
-    { day: "Sun", conversations: 42 },
+    { day: "Mon", conversations: 0 },
+    { day: "Tue", conversations: 0 },
+    { day: "Wed", conversations: 0 },
+    { day: "Thu", conversations: 0 },
+    { day: "Fri", conversations: 0 },
+    { day: "Sat", conversations: 0 },
+    { day: "Sun", conversations: 0 },
   ];
 
-  // todo: remove mock functionality
   const responseTimeData = [
-    { hour: "12am", time: 1.4 },
-    { hour: "4am", time: 1.1 },
-    { hour: "8am", time: 1.8 },
-    { hour: "12pm", time: 2.1 },
-    { hour: "4pm", time: 1.5 },
-    { hour: "8pm", time: 1.2 },
+    { hour: "12am", time: 0 },
+    { hour: "4am", time: 0 },
+    { hour: "8am", time: 0 },
+    { hour: "12pm", time: 0 },
+    { hour: "4pm", time: 0 },
+    { hour: "8pm", time: 0 },
   ];
 
-  // todo: remove mock functionality
-  const recentActivity = [
-    {
-      id: "1",
-      agent: "Customer Support Bot",
-      action: "Resolved customer inquiry",
-      customer: "Sarah Johnson",
-      time: "2 minutes ago",
-      status: "success" as const,
-    },
-    {
-      id: "2",
-      agent: "Lead Qualifier",
-      action: "Qualified new lead",
-      customer: "Michael Chen",
-      time: "15 minutes ago",
-      status: "success" as const,
-    },
-    {
-      id: "3",
-      agent: "Customer Support Bot",
-      action: "Escalated to human agent",
-      customer: "Emily Rodriguez",
-      time: "32 minutes ago",
-      status: "warning" as const,
-    },
-    {
-      id: "4",
-      agent: "Lead Qualifier",
-      action: "Lead added to HubSpot",
-      customer: "David Park",
-      time: "1 hour ago",
-      status: "success" as const,
-    },
-    {
-      id: "5",
-      agent: "FAQ Assistant",
-      action: "Answered product question",
-      customer: "Lisa Martinez",
-      time: "2 hours ago",
-      status: "success" as const,
-    },
-  ];
+  // Placeholder for recent activity (will show when we have conversation data)
+  const recentActivity: any[] = [];
 
-  // todo: remove mock functionality
   const quickActions = [
     {
       title: "Create New Agent",
@@ -244,7 +233,12 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivity.map((activity) => (
+              {recentActivity.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No recent activity yet. Start chatting with your agents to see activity here!</p>
+                </div>
+              )}
+              {recentActivity.map((activity: any) => (
                 <div key={activity.id} className="flex items-start gap-4 p-4 rounded-lg bg-muted/30" data-testid={`activity-${activity.id}`}>
                   <div className="flex-shrink-0">
                     {activity.status === 'success' ? (
@@ -319,13 +313,29 @@ export default function Dashboard() {
       </div>
 
       <div className="space-y-6">
-        {agents.map((agent) => (
+        {isLoading && (
+          <div className="text-muted-foreground">Loading agents...</div>
+        )}
+        {!isLoading && agents.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No agents yet. Create your first agent to get started!</p>
+            <Button className="mt-4" onClick={() => setLocation('/templates')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Agent
+            </Button>
+          </div>
+        )}
+        {!isLoading && agents.slice(0, 3).map((agent) => (
           <AgentCard
             key={agent.id}
-            {...agent}
-            onEdit={() => console.log('Edit agent:', agent.id)}
-            onDelete={() => console.log('Delete agent:', agent.id)}
-            onToggleActive={(active) => console.log('Toggle agent:', agent.id, active)}
+            id={agent.id}
+            name={agent.name}
+            description={agent.description}
+            status={agent.status as "active" | "inactive" | "draft"}
+            icon={iconMap[agent.template] || faqIcon}
+            onEdit={() => setLocation(`/chat?agent=${agent.id}`)}
+            onDelete={() => deleteMutation.mutate(agent.id)}
+            onToggleActive={(active) => toggleStatusMutation.mutate({ id: agent.id, active })}
           />
         ))}
       </div>

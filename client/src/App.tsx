@@ -7,6 +7,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Agents from "@/pages/Agents";
@@ -19,6 +21,7 @@ import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
@@ -30,8 +33,25 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <div className="flex flex-col flex-1">
           <header className="flex items-center justify-between p-4 border-b border-border/50 gap-4 bg-background/80 backdrop-blur-sm">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <ThemeToggle />
+            <div className="flex items-center gap-4">
+              <SidebarTrigger data-testid="button-sidebar-toggle" />
+              {user && (
+                <span className="text-sm text-muted-foreground">
+                  {user.email || 'User'}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/api/logout'}
+                data-testid="button-logout"
+              >
+                Log Out
+              </Button>
+            </div>
           </header>
           <main className="flex-1 overflow-auto p-8">
             {children}

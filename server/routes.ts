@@ -1,38 +1,10 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertAgentSchema, insertMessageSchema, insertConversationSchema } from "@shared/schema";
 import { generateAgentResponse, getSystemPromptForTemplate } from "./services/ai";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
-
-// Middleware to ensure user exists (for MVP, we'll use a default user)
-async function ensureUser(req: Request, res: Response, next: NextFunction) {
-  try {
-    // For MVP, use a default user - in production, this would come from session/auth
-    let user = await storage.getUserByUsername("demo");
-    
-    if (!user) {
-      user = await storage.createUser({
-        username: "demo",
-        password: "demo", // In production, this would be hashed
-      });
-    }
-    
-    req.user = user;
-    next();
-  } catch (error) {
-    res.status(500).json({ error: "Failed to authenticate user" });
-  }
-}
-
-// Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: string; username: string; password: string };
-    }
-  }
-}
 
 // Template definitions
 const templates = [
@@ -111,8 +83,25 @@ const templates = [
 ];
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Apply user middleware to all /api routes
-  app.use("/api", ensureUser);
+  // Setup authentication
+  await setupAuth(app);
+
+  // Auth endpoint - get current user
+  app.get('/api/auth/user', async (req, res) => {
+    try {
+      // Return null if not authenticated (instead of 401)
+      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
+        return res.json(null);
+      }
+      
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 
   // GET /api/templates - List all available templates
   app.get("/api/templates", (req, res) => {
@@ -120,9 +109,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/agents - List user's agents
-  app.get("/api/agents", async (req, res) => {
+  app.get("/api/agents", isAuthenticated, async (req: any, res) => {
     try {
-      const agents = await storage.getAgentsByUserId(req.user!.id);
+      const userId = req.user.claims.sub;
+      const agents = await storage.getAgentsByUserId(userId);
       res.json(agents);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch agents" });
@@ -130,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/agents - Create a new agent
-  app.post("/api/agents", async (req, res) => {
+  app.post("/api/agents", isAuthenticated, async (req: any, res) => {
     try {
       const { name, description, template, status } = req.body;
 
@@ -147,13 +137,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description
       );
 
+      const userId = req.user.claims.sub;
       const agentData = insertAgentSchema.parse({
         name,
         description,
         template,
         systemPrompt,
         status: status || "active",
-        userId: req.user!.id,
+        userId,
       });
 
       const agent = await storage.createAgent(agentData);
@@ -168,15 +159,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/agents/:id - Get a specific agent
-  app.get("/api/agents/:id", async (req, res) => {
+  app.get("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const agent = await storage.getAgent(req.params.id);
       
       if (!agent) {
         return res.status(404).json({ error: "Agent not found" });
       }
       
-      if (agent.userId !== req.user!.id) {
+      if (agent.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
       
@@ -187,15 +179,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PATCH /api/agents/:id - Update an agent
-  app.patch("/api/agents/:id", async (req, res) => {
+  app.patch("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const agent = await storage.getAgent(req.params.id);
       
       if (!agent) {
         return res.status(404).json({ error: "Agent not found" });
       }
       
-      if (agent.userId !== req.user!.id) {
+      if (agent.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
 
@@ -207,15 +200,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE /api/agents/:id - Delete an agent
-  app.delete("/api/agents/:id", async (req, res) => {
+  app.delete("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const agent = await storage.getAgent(req.params.id);
       
       if (!agent) {
         return res.status(404).json({ error: "Agent not found" });
       }
       
-      if (agent.userId !== req.user!.id) {
+      if (agent.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
 
@@ -227,9 +221,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/conversations - List user's conversations
-  app.get("/api/conversations", async (req, res) => {
+  app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
     try {
-      const conversations = await storage.getConversationsByUserId(req.user!.id);
+      const userId = req.user.claims.sub;
+      const conversations = await storage.getConversationsByUserId(userId);
       res.json(conversations);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch conversations" });
@@ -237,15 +232,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/conversations/:id/messages - Get all messages in a conversation
-  app.get("/api/conversations/:id/messages", async (req, res) => {
+  app.get("/api/conversations/:id/messages", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const conversation = await storage.getConversation(req.params.id);
       
       if (!conversation) {
         return res.status(404).json({ error: "Conversation not found" });
       }
       
-      if (conversation.userId !== req.user!.id) {
+      if (conversation.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
 
@@ -257,7 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/agents/:agentId/chat - Send a message to an agent
-  app.post("/api/agents/:agentId/chat", async (req, res) => {
+  app.post("/api/agents/:agentId/chat", isAuthenticated, async (req: any, res) => {
     try {
       const { message, conversationId } = req.body;
       
@@ -265,13 +261,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message is required" });
       }
 
+      const userId = req.user.claims.sub;
       const agent = await storage.getAgent(req.params.agentId);
       
       if (!agent) {
         return res.status(404).json({ error: "Agent not found" });
       }
       
-      if (agent.userId !== req.user!.id) {
+      if (agent.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
 
@@ -279,13 +276,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let conversation;
       if (conversationId) {
         conversation = await storage.getConversation(conversationId);
-        if (!conversation || conversation.userId !== req.user!.id) {
+        if (!conversation || conversation.userId !== userId) {
           return res.status(403).json({ error: "Invalid conversation" });
         }
       } else {
         conversation = await storage.createConversation({
           agentId: agent.id,
-          userId: req.user!.id,
+          userId,
           title: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
         });
       }

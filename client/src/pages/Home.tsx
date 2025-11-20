@@ -5,6 +5,7 @@ import { ArrowRight, CheckCircle2, Users, Zap, Shield, Menu } from "lucide-react
 import { useLocation } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import faqIcon from "@assets/generated_images/FAQ_chatbot_template_icon_85fc1675.png";
 import leadIcon from "@assets/generated_images/Lead_qualifier_template_icon_45379e5b.png";
@@ -23,6 +24,7 @@ import acLogo from "@assets/IMG_0009_1763658765341.png";
 export default function Home() {
   const [, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   // todo: remove mock functionality
   const templates = [
@@ -136,12 +138,20 @@ export default function Home() {
               Pricing
             </a>
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => setLocation('/dashboard')} data-testid="button-login">
-              Log In
-            </Button>
-            <Button onClick={() => setLocation('/dashboard')} data-testid="button-signup">
-              Sign Up
-            </Button>
+            {isAuthenticated ? (
+              <Button onClick={() => setLocation('/dashboard')} data-testid="button-dashboard">
+                Go to Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => window.location.href = '/api/login'} data-testid="button-login">
+                  Log In
+                </Button>
+                <Button onClick={() => window.location.href = '/api/login'} data-testid="button-signup">
+                  Get Started
+                </Button>
+              </>
+            )}
           </nav>
 
           {/* Mobile Navigation */}

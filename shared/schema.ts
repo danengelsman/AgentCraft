@@ -57,6 +57,24 @@ export const insertOnboardingProgressSchema = createInsertSchema(onboardingProgr
 export type InsertOnboardingProgress = z.infer<typeof insertOnboardingProgressSchema>;
 export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
 
+// Onboarding progress update schema for API validation
+export const onboardingProgressUpdateSchema = z.object({
+  currentStep: z.number().int().min(1).max(3).optional(),
+  wizardData: z.object({
+    selectedGoal: z.string().trim().optional(),
+    businessName: z.string().trim().min(2).optional(),
+    industry: z.string().trim().optional(),
+    goal: z.string().trim().min(2).refine(val => !val || /[a-zA-Z0-9]/.test(val), {
+      message: "Goal must contain at least one alphanumeric character"
+    }).optional(),
+  }).strict().optional(),
+  businessName: z.string().trim().min(2).optional(),
+  industry: z.string().trim().optional(),
+  goal: z.string().trim().min(2).refine(val => !val || /[a-zA-Z0-9]/.test(val), {
+    message: "Goal must contain at least one alphanumeric character"
+  }).optional(),
+});
+
 export const agents = pgTable("agents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),

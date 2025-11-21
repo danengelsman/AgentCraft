@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAgentSchema, insertMessageSchema, insertConversationSchema } from "@shared/schema";
+import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboardingProgressUpdateSchema } from "@shared/schema";
 import { generateAgentResponse, getSystemPromptForTemplate } from "./services/ai";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
@@ -90,11 +90,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', async (req, res) => {
     try {
       // Return null if not authenticated (instead of 401)
-      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
+      const userId = req.user?.claims?.sub;
+      if (!req.isAuthenticated() || !userId) {
         return res.json(null);
       }
       
-      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -107,6 +107,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/onboarding/progress', isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found in session" });
+      }
+
       const progress = await storage.getOnboardingProgress(userId);
       res.json(progress || null);
     } catch (error) {
@@ -119,27 +123,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/onboarding/progress', isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      const { currentStep, wizardData, businessName, industry, goal } = req.body;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found in session" });
+      }
 
-      // Update user profile if provided
-      if (businessName || industry || goal) {
-        await storage.updateUser(userId, {
-          businessName,
-          industry,
-          goal,
-        });
+      // Validate request body with Zod schema
+      const validatedData = onboardingProgressUpdateSchema.parse(req.body);
+
+      // Update user profile if there are valid fields
+      const profileUpdates: { businessName?: string; industry?: string; goal?: string } = {};
+      
+      if (validatedData.businessName) {
+        profileUpdates.businessName = validatedData.businessName;
+      }
+      if (validatedData.industry) {
+        profileUpdates.industry = validatedData.industry;
+      }
+      if (validatedData.goal) {
+        profileUpdates.goal = validatedData.goal;
+      }
+
+      if (Object.keys(profileUpdates).length > 0) {
+        await storage.updateUser(userId, profileUpdates);
       }
 
       // Update onboarding progress
       const progress = await storage.upsertOnboardingProgress({
         userId,
-        currentStep,
-        wizardData,
+        currentStep: validatedData.currentStep,
+        wizardData: validatedData.wizardData,
       });
 
       res.json(progress);
     } catch (error) {
       console.error("Error updating onboarding progress:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      
       res.status(500).json({ message: "Failed to update onboarding progress" });
     }
   });
@@ -148,7 +170,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/onboarding/complete', isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found in session" });
+      }
+
       const { templateId, businessName, industry, goal } = req.body;
+
+      // Validate required fields
+      if (!templateId || typeof templateId !== 'string') {
+        return res.status(400).json({ error: "Template ID is required" });
+      }
+
+      // Validate businessName: required, must be string, non-empty after trim, minimum 2 characters
+      if (!businessName || typeof businessName !== 'string') {
+        return res.status(400).json({ error: "Business name is required" });
+      }
+      
+      const trimmedBusinessName = businessName.trim();
+      if (trimmedBusinessName.length < 2) {
+        return res.status(400).json({ error: "Business name must be at least 2 characters" });
+      }
+
+      // Validate optional fields if provided
+      const trimmedIndustry = industry && typeof industry === 'string' && industry.trim().length > 0 ? industry.trim() : undefined;
+      
+      // Validate goal: must be at least 2 chars and contain at least one alphanumeric character
+      let trimmedGoal: string | undefined = undefined;
+      if (goal && typeof goal === 'string') {
+        const trimmed = goal.trim();
+        if (trimmed.length >= 2 && /[a-zA-Z0-9]/.test(trimmed)) {
+          trimmedGoal = trimmed;
+        }
+      }
 
       // Find the template
       const template = templates.find(t => t.id === templateId);
@@ -158,39 +211,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user profile
       await storage.updateUser(userId, {
-        businessName,
-        industry,
-        goal,
+        businessName: trimmedBusinessName,
+        industry: trimmedIndustry,
+        goal: trimmedGoal,
       });
 
-      // Create the first agent
-      const agentName = `${businessName || 'My'} ${template.name}`;
+      // Create the first agent with validated data
+      const agentName = `${trimmedBusinessName} ${template.name}`;
+      const agentDescription = `AI agent for ${trimmedBusinessName} - ${trimmedGoal || template.description}`;
+      
+      // Generate system prompt
       const systemPrompt = getSystemPromptForTemplate(
         template.name,
         agentName,
-        `AI agent for ${businessName || 'my business'} - ${goal || template.description}`
+        agentDescription
       );
 
-      const agent = await storage.createAgent({
+      // Validate complete agent data with Zod schema
+      const agentData = insertAgentSchema.parse({
         userId,
         name: agentName,
-        description: `AI agent for ${businessName || 'my business'} - ${goal || template.description}`,
+        description: agentDescription,
         template: templateId,
         systemPrompt,
         status: "active",
       });
+
+      const agent = await storage.createAgent(agentData);
 
       // Mark onboarding as complete
       await storage.upsertOnboardingProgress({
         userId,
         currentStep: 3,
         completedAt: new Date(),
-        wizardData: { templateId, businessName, industry, goal },
+        wizardData: { templateId, businessName: trimmedBusinessName, industry: trimmedIndustry, goal: trimmedGoal },
       });
 
       res.json({ agent, success: true });
     } catch (error) {
       console.error("Error completing onboarding:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid agent data", details: error.errors });
+      }
+      
       res.status(500).json({ message: "Failed to complete onboarding" });
     }
   });
@@ -203,7 +267,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/agents - List user's agents
   app.get("/api/agents", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const agents = await storage.getAgentsByUserId(userId);
       res.json(agents);
     } catch (error) {
@@ -214,7 +282,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/agents - Create a new agent
   app.post("/api/agents", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const { name, description, template, status } = req.body;
+
+      // Validate required fields
+      if (!name || !description || !template) {
+        return res.status(400).json({ error: "Name, description, and template are required" });
+      }
 
       // Get the template to find the correct name for system prompt
       const templateData = templates.find(t => t.id === template);
@@ -228,8 +306,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name,
         description
       );
-
-      const userId = req.user.claims.sub;
       const agentData = insertAgentSchema.parse({
         name,
         description,
@@ -253,7 +329,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/agents/:id - Get a specific agent
   app.get("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const agent = await storage.getAgent(req.params.id);
       
       if (!agent) {
@@ -273,7 +353,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PATCH /api/agents/:id - Update an agent
   app.patch("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const agent = await storage.getAgent(req.params.id);
       
       if (!agent) {
@@ -284,7 +368,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const updated = await storage.updateAgent(req.params.id, req.body);
+      // Validate update fields - only allow specific fields to be updated
+      const { name, description, status } = req.body;
+      const updateData: Partial<{ name: string; description: string; status: string }> = {};
+      
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (status !== undefined) updateData.status = status;
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ error: "No valid fields to update" });
+      }
+
+      const updated = await storage.updateAgent(req.params.id, updateData);
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to update agent" });
@@ -294,7 +390,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DELETE /api/agents/:id - Delete an agent
   app.delete("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const agent = await storage.getAgent(req.params.id);
       
       if (!agent) {
@@ -315,7 +415,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/conversations - List user's conversations
   app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const conversations = await storage.getConversationsByUserId(userId);
       res.json(conversations);
     } catch (error) {
@@ -326,7 +430,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/conversations/:id/messages - Get all messages in a conversation
   app.get("/api/conversations/:id/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const conversation = await storage.getConversation(req.params.id);
       
       if (!conversation) {
@@ -347,13 +455,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/agents/:agentId/chat - Send a message to an agent
   app.post("/api/agents/:agentId/chat", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
       const { message, conversationId } = req.body;
       
       if (!message) {
         return res.status(400).json({ error: "Message is required" });
       }
 
-      const userId = req.user.claims.sub;
       const agent = await storage.getAgent(req.params.agentId);
       
       if (!agent) {

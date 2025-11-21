@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppSidebar } from "@/components/AppSidebar";
+import { FloatingHelpWidget } from "@/components/FloatingHelpWidget";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import Home from "@/pages/Home";
@@ -134,6 +135,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <FloatingHelpWidget />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

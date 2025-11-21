@@ -183,29 +183,45 @@ export default function Home() {
                     Pricing
                   </a>
                   <div className="pt-6 border-t border-border space-y-4">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-center" 
-                      size="lg"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setLocation('/dashboard');
-                      }}
-                      data-testid="button-login-mobile"
-                    >
-                      Log In
-                    </Button>
-                    <Button 
-                      className="w-full justify-center" 
-                      size="lg"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setLocation('/dashboard');
-                      }}
-                      data-testid="button-signup-mobile"
-                    >
-                      Sign Up
-                    </Button>
+                    {isAuthenticated ? (
+                      <Button 
+                        className="w-full justify-center" 
+                        size="lg"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setLocation('/dashboard');
+                        }}
+                        data-testid="button-dashboard-mobile"
+                      >
+                        Go to Dashboard
+                      </Button>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-center" 
+                          size="lg"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            window.location.href = '/api/login';
+                          }}
+                          data-testid="button-login-mobile"
+                        >
+                          Log In
+                        </Button>
+                        <Button 
+                          className="w-full justify-center" 
+                          size="lg"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            window.location.href = '/api/login';
+                          }}
+                          data-testid="button-signup-mobile"
+                        >
+                          Sign Up
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </nav>
               </SheetContent>

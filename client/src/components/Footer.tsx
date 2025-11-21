@@ -71,10 +71,8 @@ export function Footer() {
               >
                 Login
               </a>
-              <Link href="/templates">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-start-building">
-                  Start building
-                </a>
+              <Link href="/templates" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-start-building">
+                Start building
               </Link>
             </nav>
           </div>
@@ -83,20 +81,14 @@ export function Footer() {
           <div className="flex flex-col items-center md:items-start" data-testid="footer-resources-section">
             <h3 className="font-semibold text-foreground mb-4">Resources</h3>
             <nav className="flex flex-col gap-3 items-center md:items-start">
-              <Link href="/resources">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-docs">
-                  Docs
-                </a>
+              <Link href="/resources" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-docs">
+                Docs
               </Link>
-              <Link href="/subscription">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-pricing">
-                  Pricing
-                </a>
+              <Link href="/subscription" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-pricing">
+                Pricing
               </Link>
-              <Link href="/settings">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-integrations">
-                  Integrations
-                </a>
+              <Link href="/settings" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-integrations">
+                Integrations
               </Link>
             </nav>
           </div>
@@ -105,10 +97,8 @@ export function Footer() {
           <div className="flex flex-col items-center md:items-start" data-testid="footer-company-section">
             <h3 className="font-semibold text-foreground mb-4">Company</h3>
             <nav className="flex flex-col gap-3 items-center md:items-start">
-              <Link href="/resources">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-blog">
-                  Blog
-                </a>
+              <Link href="/resources" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-blog">
+                Blog
               </Link>
               <span 
                 className="text-sm text-muted-foreground/50 cursor-not-allowed"

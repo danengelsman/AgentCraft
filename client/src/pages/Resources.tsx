@@ -1,3 +1,4 @@
+import { type KeyboardEvent } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Video, FileText, Trophy, ExternalLink, Play, CheckCircle2 } from "lucide-react";
@@ -142,6 +143,13 @@ export default function Resources() {
     });
   };
 
+  const handleKeyDown = (e: KeyboardEvent, callback: () => void) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      callback();
+    }
+  };
+
   return (
     <div>
       <div className="mb-12">
@@ -168,7 +176,10 @@ export default function Resources() {
               key={video.id} 
               className="hover-elevate cursor-pointer" 
               data-testid={`video-${video.id}`}
+              role="button"
+              tabIndex={0}
               onClick={() => handleVideoClick(video)}
+              onKeyDown={(e) => handleKeyDown(e, () => handleVideoClick(video))}
             >
               <CardContent className="p-0">
                 <div className="aspect-video bg-muted/50 flex items-center justify-center rounded-t-lg border-b">
@@ -206,7 +217,10 @@ export default function Resources() {
               key={useCase.id} 
               className="hover-elevate cursor-pointer" 
               data-testid={`use-case-${useCase.id}`}
+              role="button"
+              tabIndex={0}
               onClick={() => handleUseCaseClick(useCase)}
+              onKeyDown={(e) => handleKeyDown(e, () => handleUseCaseClick(useCase))}
             >
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">

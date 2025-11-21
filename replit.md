@@ -38,21 +38,33 @@ The application implements a premium luxury design system inspired by Apple's pr
 
 **Recent Updates (November 2024):**
 - Expanded templates from 3 to 12 total, covering comprehensive business automation use cases
-- Enriched Dashboard with Recharts visualizations (area charts for conversations, line charts for response times)
-- Added recent activity feed showing agent interactions with success/warning status indicators
+- Connected all 12 templates to agent creation system with Zod validation and unique system prompts
+- Implemented Quick Start Wizard: 3-step onboarding (Welcome → Business context → Instant agent) with progress persistence and auto-open for new users
+- Enriched Dashboard with REAL analytics connected to live conversation data:
+  - Conversation volume tracking (last 7 days by day of week)
+  - Real response time calculation from user→assistant message pairs
+  - Recent activity feed (last 10 conversations with user message previews)
+  - Optimized with single-query message batching (no N+1) using `getMessagesByConversationIds()`
+  - Live stat cards showing total agents, active agents, conversation count, and average response time
 - Created Resources/Learning page with video tutorials, use case guides, best practices, and success stories
 - Expanded integrations beyond HubSpot to include Calendly, Slack, Gmail, Stripe, and Zapier
 - Added 5 pre-built example agents to Agent Gallery with performance metrics and clone functionality
 - Implemented comprehensive mobile optimization with hamburger navigation, responsive typography (4xl→7xl scaling), and touch-friendly interfaces
 - Updated branding to use custom neural network "A" logo (blue metallic with silver circular frame)
+- Full authentication implementation with Replit Auth (OIDC)
 
 **Key Features:**
-- **Dashboard**: Rich analytics with performance charts (conversation volume, response time trends using Recharts), recent activity feed, quick action cards, and usage tracking with visual progress bars
+- **Quick Start Wizard**: 3-step guided onboarding that creates first agent in <60 seconds (Welcome/goal selection → Business context → Instant agent creation)
+- **Dashboard**: Real-time analytics with live data:
+  - Conversation volume chart (last 7 days, area chart)
+  - Response time trends (hourly bucketing, calculated from actual message timestamps)
+  - Recent activity feed (last 10 conversations with user message previews, formatted relative timestamps)
+  - Live stats: total agents, active agents, total conversations, average response time
+  - Performance optimized with single-query message batching
 - **Agent Gallery**: Manages user agents with search/filter functionality, plus 5 pre-built example agents (E-commerce Support, Real Estate Lead Bot, Healthcare Appointment Manager, SaaS Onboarding, Restaurant Review Manager) that users can clone
-- **Template Marketplace**: 12 comprehensive solution templates including Website FAQ Chatbot, Lead Qualification, Appointment Scheduler, Email Responder, Social Media Manager, Customer Onboarding, Product Recommender, Sales Outreach, Meeting Summarizer, Review Responder, Feedback Collector, and Invoice Reminder
-- **Resources & Learning**: Dedicated page with video tutorials, use case guides, best practices documentation, and success stories from businesses using the platform
-- **Chat Interface**: For testing and interacting with agents
-- **Tutorial System**: For user onboarding
+- **Template Marketplace**: 12 comprehensive solution templates fully connected to agent creation system, each with unique system prompts optimized for specific use cases (Website FAQ, Lead Qualification, Appointment Scheduler, Email Responder, Social Media Manager, Customer Onboarding, Product Recommender, Sales Outreach, Meeting Summarizer, Review Responder, Feedback Collector, Invoice Reminder)
+- **Chat Interface**: Fully functional OpenAI integration with conversation history, message persistence, and streaming support
+- **Resources & Learning**: Dedicated page with video tutorials, use case guides, best practices documentation, and success stories
 - **Subscription/Pricing**: Free tier (1 agent, 100 msgs/month) and Pro tier ($49/month, 10 agents, unlimited messages)
 - **Settings & Integrations**: User preferences plus integration management for HubSpot CRM, Calendly, Slack, Gmail, Stripe, and Zapier
 
@@ -74,16 +86,32 @@ The application implements a premium luxury design system inspired by Apple's pr
 - Development server: `server/vite.ts` for Vite integration in dev mode
 
 **Storage Interface Design:**
-The application uses an abstraction layer (IStorage) that currently implements in-memory storage (MemStorage class) for users. This design allows easy migration to database-backed storage without changing business logic. Key methods:
-- `getUser(id)` - Retrieve user by ID
-- `getUserByUsername(username)` - Retrieve user by username
-- `createUser(user)` - Create new user
+The application uses a database-backed storage layer (DbStorage) implementing the IStorage interface. Key features:
+- PostgreSQL database via Neon serverless
+- Drizzle ORM for type-safe database operations
+- Performance optimizations: batched message fetching with `getMessagesByConversationIds()` to avoid N+1 queries
+- Key methods:
+  - User management: `getUser()`, `upsertUser()`, `updateUser()`
+  - Onboarding: `getOnboardingProgress()`, `upsertOnboardingProgress()`
+  - Agents: `getAgent()`, `getAgentsByUserId()`, `createAgent()`, `updateAgent()`, `deleteAgent()`
+  - Conversations: `getConversation()`, `getConversationsByUserId()`, `createConversation()`
+  - Messages: `getMessagesByConversationId()`, `getMessagesByConversationIds()` (batched), `createMessage()`
+  - Analytics: `getAnalyticsByAgentId()`, `createAnalytics()`
 
 **API Design:**
 - All API routes prefixed with `/api`
 - Request/response logging middleware for debugging
 - JSON body parsing with raw body preservation for webhooks
 - CORS and credentials support configured
+- Comprehensive Zod validation for all authenticated endpoints
+- Key endpoints:
+  - `GET /api/dashboard/analytics` - Real-time analytics (conversation volume, response times, recent activity)
+  - `GET /api/onboarding/progress` - Fetch user onboarding state
+  - `PUT /api/onboarding/progress` - Update onboarding progress with validated wizardData
+  - `POST /api/onboarding/complete` - Complete onboarding and create first agent
+  - `POST /api/agents/:agentId/chat` - Send messages to agents (OpenAI integration)
+  - `GET /api/conversations` - List user conversations
+  - `GET /api/conversations/:id/messages` - Get conversation message history
 
 ### Data Storage
 

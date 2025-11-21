@@ -1,8 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Video, FileText, Trophy, ExternalLink, Play, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Resources() {
+  const { toast } = useToast();
   // todo: remove mock functionality
   const useCases = [
     {
@@ -126,6 +128,20 @@ export default function Resources() {
     },
   ];
 
+  const handleVideoClick = (video: typeof videos[0]) => {
+    toast({
+      title: "Video Tutorial Coming Soon",
+      description: `"${video.title}" will be available soon. We're creating high-quality video content to help you get the most out of AgentCraft.`,
+    });
+  };
+
+  const handleUseCaseClick = (useCase: typeof useCases[0]) => {
+    toast({
+      title: "Guide Coming Soon",
+      description: `"${useCase.title}" guide will be available soon. Check back for detailed industry-specific strategies.`,
+    });
+  };
+
   return (
     <div>
       <div className="mb-12">
@@ -148,7 +164,12 @@ export default function Resources() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {videos.map((video) => (
-            <Card key={video.id} className="hover-elevate cursor-pointer" data-testid={`video-${video.id}`}>
+            <Card 
+              key={video.id} 
+              className="hover-elevate cursor-pointer" 
+              data-testid={`video-${video.id}`}
+              onClick={() => handleVideoClick(video)}
+            >
               <CardContent className="p-0">
                 <div className="aspect-video bg-muted/50 flex items-center justify-center rounded-t-lg border-b">
                   <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
@@ -181,7 +202,12 @@ export default function Resources() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {useCases.map((useCase) => (
-            <Card key={useCase.id} className="hover-elevate cursor-pointer" data-testid={`use-case-${useCase.id}`}>
+            <Card 
+              key={useCase.id} 
+              className="hover-elevate cursor-pointer" 
+              data-testid={`use-case-${useCase.id}`}
+              onClick={() => handleUseCaseClick(useCase)}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-primary px-2 py-1 rounded-md bg-primary/10">

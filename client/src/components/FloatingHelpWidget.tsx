@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,12 +17,29 @@ export function FloatingHelpWidget() {
     setQuery("");
   };
 
+  const handleClose = () => {
+    setIsExpanded(false);
+  };
+
+  // Handle Escape key to close widget
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isExpanded) {
+        handleClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isExpanded]);
+
   if (!isExpanded) {
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover-elevate active-elevate-2 flex items-center justify-center group"
+        className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover-elevate active-elevate-2 flex items-center justify-center group"
         aria-label="Open help widget"
+        aria-expanded="false"
         data-testid="button-open-help-widget"
       >
         <MessageCircle className="h-6 w-6" />
@@ -31,15 +48,20 @@ export function FloatingHelpWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] sm:w-[420px]">
+    <div 
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-6 sm:bottom-6 z-50 w-[calc(100vw-2rem)] sm:w-[420px]"
+      role="dialog"
+      aria-label="Help widget"
+    >
       <Card className="border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg font-semibold">Ask anything</CardTitle>
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsExpanded(false)}
+            onClick={handleClose}
             aria-label="Close help widget"
+            aria-expanded="true"
             data-testid="button-close-help-widget"
           >
             <X className="h-4 w-4" />

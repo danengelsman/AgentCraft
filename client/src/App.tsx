@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FloatingHelpWidget } from "@/components/FloatingHelpWidget";
+import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import Home from "@/pages/Home";
@@ -54,8 +55,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-8">
-            {children}
+          <main className="flex-1 overflow-auto">
+            <div className="p-8">
+              {children}
+            </div>
+            <Footer />
           </main>
         </div>
       </div>

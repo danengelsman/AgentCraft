@@ -1,5 +1,6 @@
 import { HeroSection } from "@/components/HeroSection";
 import { TemplateCard } from "@/components/TemplateCard";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Users, Zap, Shield, Menu } from "lucide-react";
 import { useLocation } from "wouter";
@@ -346,11 +347,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t py-12 px-6">
-        <div className="max-w-7xl mx-auto text-center text-muted-foreground text-sm">
-          <p>&copy; 2024 AgentCraft. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

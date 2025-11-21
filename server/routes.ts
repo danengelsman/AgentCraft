@@ -6,6 +6,18 @@ import { generateAgentResponse, getSystemPromptForTemplate } from "./services/ai
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 
+// Helper function to format timestamps as relative time
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+}
+
 // Template definitions
 const templates = [
   {
@@ -409,6 +421,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete agent" });
+    }
+  });
+
+  // GET /api/dashboard/analytics - Get dashboard analytics for the current user
+  app.get("/api/dashboard/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User ID not found in session" });
+      }
+
+      // Get all conversations for the user (already sorted by updatedAt desc from storage)
+      const conversations = await storage.getConversationsByUserId(userId);
+      
+      // Get all agents for the user
+      const agents = await storage.getAgentsByUserId(userId);
+      
+      // Fetch all messages for all conversations in a single query (avoid N+1)
+      const conversationIds = conversations.map(c => c.id);
+      const allMessages = await storage.getMessagesByConversationIds(conversationIds);
+      
+      // Group messages by conversation ID
+      const conversationMessages = new Map<string, typeof allMessages>();
+      allMessages.forEach(msg => {
+        if (!conversationMessages.has(msg.conversationId)) {
+          conversationMessages.set(msg.conversationId, []);
+        }
+        conversationMessages.get(msg.conversationId)?.push(msg);
+      });
+      
+      // Calculate conversation volume by day (last 7 days)
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const conversationsByDay = new Map<string, number>();
+      
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dayName = dayNames[date.getDay()];
+        conversationsByDay.set(dayName, 0);
+      }
+      
+      conversations.forEach(conv => {
+        if (conv.createdAt >= sevenDaysAgo) {
+          const dayName = dayNames[conv.createdAt.getDay()];
+          conversationsByDay.set(dayName, (conversationsByDay.get(dayName) || 0) + 1);
+        }
+      });
+      
+      const conversationData = Array.from(conversationsByDay.entries()).map(([day, conversations]) => ({
+        day,
+        conversations
+      }));
+      
+      // Calculate recent activity (last 10 conversations, already sorted desc by updatedAt)
+      const recentConversations = conversations.slice(0, 10);
+      const recentActivity = recentConversations.map((conv) => {
+        const agent = agents.find(a => a.id === conv.agentId);
+        const messages = conversationMessages.get(conv.id) || [];
+        
+        // Find the last user message for customer preview
+        const lastUserMessage = messages.filter(m => m.role === 'user').slice(-1)[0];
+        const customerPreview = lastUserMessage?.content.substring(0, 50) || 'No messages';
+        
+        return {
+          id: conv.id,
+          agent: agent?.name || 'Unknown Agent',
+          action: conv.title || 'Untitled Conversation',
+          customer: customerPreview,
+          time: conv.updatedAt.toISOString(),
+          status: 'success',
+        };
+      });
+      
+      // Calculate average response time by hour from actual message data
+      const responseTimesByHour = new Map<number, number[]>();
+      
+      // Initialize all hours
+      for (let hour = 0; hour < 24; hour++) {
+        responseTimesByHour.set(hour, []);
+      }
+      
+      // Calculate response times from message pairs (using messages already fetched)
+      for (const conv of conversations) {
+        const messages = conversationMessages.get(conv.id) || [];
+        
+        for (let i = 0; i < messages.length - 1; i++) {
+          const currentMsg = messages[i];
+          const nextMsg = messages[i + 1];
+          
+          // Only count user→assistant pairs
+          if (currentMsg.role === 'user' && nextMsg.role === 'assistant') {
+            const userTime = new Date(currentMsg.createdAt).getTime();
+            const assistantTime = new Date(nextMsg.createdAt).getTime();
+            const responseTime = (assistantTime - userTime) / 1000; // seconds
+            
+            // Only count positive response times
+            if (responseTime > 0) {
+              // Use assistant reply timestamp for bucketing
+              const hour = new Date(nextMsg.createdAt).getHours();
+              responseTimesByHour.get(hour)?.push(responseTime);
+            }
+          }
+        }
+      }
+      
+      // Aggregate by 4-hour blocks
+      const hourBlocks = [
+        { label: "12am", hours: [0, 1, 2, 3] },
+        { label: "4am", hours: [4, 5, 6, 7] },
+        { label: "8am", hours: [8, 9, 10, 11] },
+        { label: "12pm", hours: [12, 13, 14, 15] },
+        { label: "4pm", hours: [16, 17, 18, 19] },
+        { label: "8pm", hours: [20, 21, 22, 23] },
+      ];
+      
+      const responseTimeData = hourBlocks.map(block => {
+        const allTimes: number[] = [];
+        block.hours.forEach(hour => {
+          const times = responseTimesByHour.get(hour) || [];
+          allTimes.push(...times);
+        });
+        
+        const avgTime = allTimes.length > 0
+          ? allTimes.reduce((a, b) => a + b, 0) / allTimes.length
+          : 0;
+        
+        return {
+          hour: block.label,
+          time: Number(avgTime.toFixed(2)),
+        };
+      });
+      
+      // Calculate overall average response time
+      const allResponseTimes: number[] = [];
+      responseTimesByHour.forEach(times => allResponseTimes.push(...times));
+      const avgResponseTime = allResponseTimes.length > 0
+        ? allResponseTimes.reduce((a, b) => a + b, 0) / allResponseTimes.length
+        : 0;
+      
+      res.json({
+        conversationData,
+        responseTimeData,
+        recentActivity,
+        totalConversations: conversations.length,
+        avgResponseTime: Number(avgResponseTime.toFixed(2)),
+      });
+    } catch (error) {
+      console.error("Dashboard analytics error:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard analytics" });
     }
   });
 

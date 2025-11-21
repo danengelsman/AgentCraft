@@ -39,6 +39,31 @@ export default function Dashboard() {
     enabled: !!onboardingProgress?.completedAt || !shouldShowOnboarding,
   });
 
+  // Fetch dashboard analytics
+  const { data: analytics } = useQuery<{
+    conversationData: Array<{ day: string; conversations: number }>;
+    responseTimeData: Array<{ hour: string; time: number }>;
+    recentActivity: Array<{ id: string; agent: string; action: string; customer: string; time: string; status: string }>;
+    totalConversations: number;
+    avgResponseTime: number;
+  }>({
+    queryKey: ['/api/dashboard/analytics'],
+    enabled: !!onboardingProgress?.completedAt || !shouldShowOnboarding,
+  });
+
+  // Helper function to format ISO timestamps as relative time
+  const formatTimeAgo = (isoString: string): string => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return date.toLocaleDateString();
+  };
+
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -81,16 +106,25 @@ export default function Dashboard() {
   // Calculate stats from real agent data
   const activeAgents = agents.filter(a => a.status === "active").length;
   const totalAgents = agents.length;
+  const totalConversations = analytics?.totalConversations || 0;
+  const avgResponseTime = analytics?.avgResponseTime || 0;
+  
+  // Format response time for display
+  const responseTimeDisplay = avgResponseTime > 0 
+    ? avgResponseTime < 1 
+      ? `${(avgResponseTime * 1000).toFixed(0)}ms`
+      : `${avgResponseTime.toFixed(1)}s`
+    : "N/A";
 
   const stats = [
     { title: "Total Agents", value: totalAgents.toString(), icon: Bot },
     { title: "Active Agents", value: activeAgents.toString(), icon: MessageSquare },
-    { title: "Ready to Chat", value: activeAgents > 0 ? "Yes" : "No", icon: TrendingUp },
-    { title: "Response Time", value: "Instant", icon: Clock },
+    { title: "Conversations", value: totalConversations.toString(), icon: TrendingUp },
+    { title: "Response Time", value: responseTimeDisplay, icon: Clock },
   ];
 
-  // Placeholder data for charts (will be real data once we have conversation history)
-  const conversationData = [
+  // Use real analytics data or fallback to empty state
+  const conversationData = analytics?.conversationData || [
     { day: "Mon", conversations: 0 },
     { day: "Tue", conversations: 0 },
     { day: "Wed", conversations: 0 },
@@ -100,7 +134,7 @@ export default function Dashboard() {
     { day: "Sun", conversations: 0 },
   ];
 
-  const responseTimeData = [
+  const responseTimeData = analytics?.responseTimeData || [
     { hour: "12am", time: 0 },
     { hour: "4am", time: 0 },
     { hour: "8am", time: 0 },
@@ -109,8 +143,7 @@ export default function Dashboard() {
     { hour: "8pm", time: 0 },
   ];
 
-  // Placeholder for recent activity (will show when we have conversation data)
-  const recentActivity: any[] = [];
+  const recentActivity = analytics?.recentActivity || [];
 
   const quickActions = [
     {
@@ -280,7 +313,7 @@ export default function Dashboard() {
                     <p className="font-medium text-sm">{activity.agent}</p>
                     <p className="text-sm text-muted-foreground">{activity.action}</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      <span className="font-medium text-foreground">{activity.customer}</span> • {activity.time}
+                      <span className="font-medium text-foreground">{activity.customer}</span> • {formatTimeAgo(activity.time)}
                     </p>
                   </div>
                 </div>

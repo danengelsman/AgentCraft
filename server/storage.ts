@@ -20,7 +20,7 @@ import {
   onboardingProgress
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -47,6 +47,7 @@ export interface IStorage {
 
   // Messages
   getMessagesByConversationId(conversationId: string): Promise<Message[]>;
+  getMessagesByConversationIds(conversationIds: string[]): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
 
   // Analytics
@@ -155,6 +156,20 @@ export class DbStorage implements IStorage {
   // Messages
   async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
     return db.select().from(messages).where(eq(messages.conversationId, conversationId)).orderBy(messages.createdAt);
+  }
+
+  async getMessagesByConversationIds(conversationIds: string[]): Promise<Message[]> {
+    // Guard for empty input
+    if (conversationIds.length === 0) {
+      return [];
+    }
+    
+    // Fetch all messages for the given conversation IDs in a single query
+    return db
+      .select()
+      .from(messages)
+      .where(inArray(messages.conversationId, conversationIds))
+      .orderBy(messages.conversationId, messages.createdAt);
   }
 
   async createMessage(message: InsertMessage): Promise<Message> {

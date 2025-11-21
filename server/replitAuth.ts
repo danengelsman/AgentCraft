@@ -35,7 +35,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       maxAge: sessionTtl,
     },
   });
@@ -91,11 +91,7 @@ export async function setupAuth(app: Express) {
   const registeredStrategies = new Set<string>();
 
   // Helper function to ensure strategy exists for a domain
-  const ensureStrategy = (req: any) => {
-    const domain = req.hostname;
-    // Check X-Forwarded-Proto header for proper protocol behind proxies
-    const forwardedProto = req.headers['x-forwarded-proto'];
-    const protocol = forwardedProto || req.protocol || 'https';
+  const ensureStrategy = (domain: string) => {
     const strategyName = `replitauth:${domain}`;
     if (!registeredStrategies.has(strategyName)) {
       const strategy = new Strategy(
@@ -103,7 +99,7 @@ export async function setupAuth(app: Express) {
           name: strategyName,
           config,
           scope: "openid email profile offline_access",
-          callbackURL: `${protocol}://${domain}/api/callback`,
+          callbackURL: `https://${domain}/api/callback`,
         },
         verify,
       );
@@ -116,52 +112,29 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    try {
-      ensureStrategy(req);
-      passport.authenticate(`replitauth:${req.hostname}`, {
-        prompt: "login consent",
-        scope: ["openid", "email", "profile", "offline_access"],
-      })(req, res, next);
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Authentication failed" });
-    }
+    ensureStrategy(req.hostname);
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      prompt: "login consent",
+      scope: ["openid", "email", "profile", "offline_access"],
+    })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    try {
-      ensureStrategy(req);
-      passport.authenticate(`replitauth:${req.hostname}`, {
-        successReturnToOrRedirect: "/dashboard",
-        failureRedirect: "/api/login",
-      })(req, res, next);
-    } catch (error) {
-      console.error("Callback error:", error);
-      res.redirect("/api/login");
-    }
+    ensureStrategy(req.hostname);
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      successReturnToOrRedirect: "/",
+      failureRedirect: "/api/login",
+    })(req, res, next);
   });
 
   app.get("/api/logout", (req, res) => {
-    req.logout((err) => {
-      if (err) {
-        console.error("Logout error:", err);
-        return res.status(500).json({ message: "Logout failed" });
-      }
-      
-      try {
-        // Check X-Forwarded-Proto header for proper protocol behind proxies
-        const forwardedProto = req.headers['x-forwarded-proto'];
-        const protocol = forwardedProto || req.protocol || 'https';
-        res.redirect(
-          client.buildEndSessionUrl(config, {
-            client_id: process.env.REPL_ID!,
-            post_logout_redirect_uri: `${protocol}://${req.hostname}`,
-          }).href
-        );
-      } catch (error) {
-        console.error("Logout redirect error:", error);
-        res.redirect("/");
-      }
+    req.logout(() => {
+      res.redirect(
+        client.buildEndSessionUrl(config, {
+          client_id: process.env.REPL_ID!,
+          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+        }).href
+      );
     });
   });
 }

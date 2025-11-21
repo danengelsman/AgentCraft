@@ -90,7 +90,7 @@ export default function Subscription() {
             "Priority support",
             "Custom branding",
           ]}
-          highlighted={currentPlan === "pro"}
+          highlighted={false}
           ctaText="Upgrade to Pro"
           onSelect={() => console.log('Upgrade to Pro')}
         />

@@ -1,7 +1,10 @@
 import OpenAI from "openai";
 
+// Using Replit's AI Integrations service for OpenAI-compatible API access
+// No personal API key needed - charges are billed to your Replit credits
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
 });
 
 export interface ChatMessage {
@@ -20,7 +23,7 @@ export async function generateAgentResponse(
     ];
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o-mini", // Using gpt-4o-mini for cost-effective agent responses
       messages: messages,
       temperature: 0.7,
       max_tokens: 500,

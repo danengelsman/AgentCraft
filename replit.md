@@ -64,6 +64,7 @@ The application implements a premium luxury design system inspired by Apple's pr
 - **Agent Gallery**: Manages user agents with search/filter functionality, plus 5 pre-built example agents (E-commerce Support, Real Estate Lead Bot, Healthcare Appointment Manager, SaaS Onboarding, Restaurant Review Manager) that users can clone
 - **Template Marketplace**: 12 comprehensive solution templates fully connected to agent creation system, each with unique system prompts optimized for specific use cases (Website FAQ, Lead Qualification, Appointment Scheduler, Email Responder, Social Media Manager, Customer Onboarding, Product Recommender, Sales Outreach, Meeting Summarizer, Review Responder, Feedback Collector, Invoice Reminder)
 - **Chat Interface**: Fully functional OpenAI integration with conversation history, message persistence, and streaming support
+- **Floating Help Widget**: Global "Ask anything" widget with glass/metal aesthetic, responsive design (centered on mobile, bottom-right on desktop), accessible keyboard navigation (Escape to close), and input placeholder "ask AgentCraft" - ready for future chat/help system integration
 - **Resources & Learning**: Dedicated page with video tutorials, use case guides, best practices documentation, and success stories
 - **Subscription/Pricing**: Free tier (1 agent, 100 msgs/month) and Pro tier ($49/month, 10 agents, unlimited messages)
 - **Settings & Integrations**: User preferences plus integration management for HubSpot CRM, Calendly, Slack, Gmail, Stripe, and Zapier

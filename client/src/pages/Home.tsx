@@ -295,7 +295,7 @@ export default function Home() {
                   <span>Community support</span>
                 </li>
               </ul>
-              <Button className="w-full" size="lg" variant="outline" onClick={() => setLocation('/dashboard')} data-testid="button-get-started-free">
+              <Button className="w-full" size="lg" variant="outline" onClick={() => window.location.href = '/api/login'} data-testid="button-get-started-free">
                 Get Started Free
               </Button>
             </div>
@@ -338,7 +338,7 @@ export default function Home() {
                   <span>Custom branding</span>
                 </li>
               </ul>
-              <Button className="w-full" size="lg" onClick={() => setLocation('/dashboard')} data-testid="button-upgrade-pro">
+              <Button className="w-full" size="lg" onClick={() => window.location.href = '/api/login'} data-testid="button-upgrade-pro">
                 Upgrade to Pro
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

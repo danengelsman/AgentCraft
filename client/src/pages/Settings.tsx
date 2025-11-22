@@ -4,11 +4,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 export default function Settings() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(false);
+  const { toast } = useToast();
+
+  const handleSaveProfile = () => {
+    toast({
+      title: "Settings Saved",
+      description: "Your profile information has been updated successfully.",
+    });
+  };
 
   return (
     <div>
@@ -40,7 +49,7 @@ export default function Settings() {
               <Label htmlFor="company">Company Name</Label>
               <Input id="company" placeholder="Acme Inc." defaultValue="Acme Inc." data-testid="input-company" />
             </div>
-            <Button data-testid="button-save-profile">Save Changes</Button>
+            <Button onClick={handleSaveProfile} data-testid="button-save-profile">Save Changes</Button>
           </CardContent>
         </Card>
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboardingProgressUpdateSchema } from "@shared/schema";
+import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboardingProgressUpdateSchema, userProfileUpdateSchema, userNotificationsUpdateSchema } from "@shared/schema";
 import { generateAgentResponse, getSystemPromptForTemplate } from "./services/ai";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
@@ -268,6 +268,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ message: "Failed to complete onboarding" });
+    }
+  });
+
+  // PUT /api/user/profile - Update user profile information
+  app.put('/api/user/profile', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found in session" });
+      }
+
+      // Validate request body with Zod schema
+      const validatedData = userProfileUpdateSchema.parse(req.body);
+
+      // Update user profile
+      const updatedUser = await storage.updateUser(userId, validatedData);
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid profile data", errors: error.errors });
+      }
+      
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // PUT /api/user/notifications - Update notification preferences
+  app.put('/api/user/notifications', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found in session" });
+      }
+
+      // Validate request body with Zod schema
+      const validatedData = userNotificationsUpdateSchema.parse(req.body);
+
+      // Convert booleans to integers for database storage
+      const updatedUser = await storage.updateUser(userId, {
+        emailNotifications: validatedData.emailNotifications ? 1 : 0,
+        weeklyReports: validatedData.weeklyReports ? 1 : 0,
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating notification preferences:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid notification data", errors: error.errors });
+      }
+      
+      res.status(500).json({ message: "Failed to update notifications" });
     }
   });
 

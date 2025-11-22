@@ -24,6 +24,8 @@ export const users = pgTable("users", {
   businessName: varchar("business_name"),
   industry: varchar("industry"),
   goal: text("goal"),
+  emailNotifications: integer("email_notifications").notNull().default(1),
+  weeklyReports: integer("weekly_reports").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -73,6 +75,20 @@ export const onboardingProgressUpdateSchema = z.object({
   goal: z.string().trim().min(2).refine(val => !val || /[a-zA-Z0-9]/.test(val), {
     message: "Goal must contain at least one alphanumeric character"
   }).optional(),
+});
+
+// User profile update schema for Settings page
+export const userProfileUpdateSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required").optional(),
+  lastName: z.string().trim().min(1, "Last name is required").optional(),
+  businessName: z.string().trim().min(2, "Business name must be at least 2 characters").optional(),
+  industry: z.string().trim().optional(),
+});
+
+// User notification preferences update schema
+export const userNotificationsUpdateSchema = z.object({
+  emailNotifications: z.boolean(),
+  weeklyReports: z.boolean(),
 });
 
 export const agents = pgTable("agents", {

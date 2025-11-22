@@ -5,18 +5,104 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { User } from "@shared/schema";
 
 export default function Settings() {
+  const { toast } = useToast();
+  
+  // Form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [industry, setIndustry] = useState("");
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [weeklyReports, setWeeklyReports] = useState(false);
-  const { toast } = useToast();
+
+  // Fetch current user data
+  const { data: user, isLoading } = useQuery<User | null>({
+    queryKey: ['/api/auth/user'],
+  });
+
+  // Populate form when user data loads
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setBusinessName(user.businessName || "");
+      setIndustry(user.industry || "");
+      setEmailNotifications(Boolean(user.emailNotifications));
+      setWeeklyReports(Boolean(user.weeklyReports));
+    }
+  }, [user]);
+
+  // Profile update mutation
+  const profileMutation = useMutation({
+    mutationFn: async (data: { firstName?: string; lastName?: string; businessName?: string; industry?: string }) => {
+      return await apiRequest('PUT', '/api/user/profile', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Notifications update mutation
+  const notificationsMutation = useMutation({
+    mutationFn: async (data: { emailNotifications: boolean; weeklyReports: boolean }) => {
+      return await apiRequest('PUT', '/api/user/notifications', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "Notifications Updated",
+        description: "Your notification preferences have been saved.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update notifications",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSaveProfile = () => {
-    toast({
-      title: "Settings Saved",
-      description: "Your profile information has been updated successfully.",
+    profileMutation.mutate({
+      firstName,
+      lastName,
+      businessName,
+      industry,
     });
+  };
+
+  const handleNotificationChange = (field: 'email' | 'weekly', value: boolean) => {
+    if (field === 'email') {
+      setEmailNotifications(value);
+      notificationsMutation.mutate({
+        emailNotifications: value,
+        weeklyReports,
+      });
+    } else {
+      setWeeklyReports(value);
+      notificationsMutation.mutate({
+        emailNotifications,
+        weeklyReports: value,
+      });
+    }
   };
 
   return (
@@ -37,19 +123,71 @@ export default function Settings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="John Doe" defaultValue="John Doe" data-testid="input-name" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input 
+                  id="firstName" 
+                  placeholder="John" 
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={isLoading}
+                  data-testid="input-first-name" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input 
+                  id="lastName" 
+                  placeholder="Doe" 
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={isLoading}
+                  data-testid="input-last-name" 
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="john@example.com" defaultValue="john@example.com" data-testid="input-email" />
+              <Input 
+                id="email" 
+                type="email" 
+                value={user?.email || ""} 
+                disabled 
+                className="bg-muted"
+                data-testid="input-email" 
+              />
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">Company Name</Label>
-              <Input id="company" placeholder="Acme Inc." defaultValue="Acme Inc." data-testid="input-company" />
+              <Label htmlFor="businessName">Business Name</Label>
+              <Input 
+                id="businessName" 
+                placeholder="Acme Inc." 
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                disabled={isLoading}
+                data-testid="input-business-name" 
+              />
             </div>
-            <Button onClick={handleSaveProfile} data-testid="button-save-profile">Save Changes</Button>
+            <div className="space-y-2">
+              <Label htmlFor="industry">Industry</Label>
+              <Input 
+                id="industry" 
+                placeholder="Technology" 
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                disabled={isLoading}
+                data-testid="input-industry" 
+              />
+            </div>
+            <Button 
+              onClick={handleSaveProfile} 
+              disabled={profileMutation.isPending || isLoading}
+              data-testid="button-save-profile"
+            >
+              {profileMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
           </CardContent>
         </Card>
 
@@ -71,7 +209,8 @@ export default function Settings() {
               <Switch
                 id="email-notifications"
                 checked={emailNotifications}
-                onCheckedChange={setEmailNotifications}
+                onCheckedChange={(value) => handleNotificationChange('email', value)}
+                disabled={notificationsMutation.isPending || isLoading}
                 data-testid="switch-email-notifications"
               />
             </div>
@@ -86,7 +225,8 @@ export default function Settings() {
               <Switch
                 id="weekly-reports"
                 checked={weeklyReports}
-                onCheckedChange={setWeeklyReports}
+                onCheckedChange={(value) => handleNotificationChange('weekly', value)}
+                disabled={notificationsMutation.isPending || isLoading}
                 data-testid="switch-weekly-reports"
               />
             </div>

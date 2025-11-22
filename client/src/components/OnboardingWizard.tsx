@@ -198,28 +198,28 @@ export function OnboardingWizard({ open, initialProgress, onComplete, onClose }:
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden" data-testid="dialog-onboarding-wizard">
+      <DialogContent className="max-w-4xl h-[90vh] max-h-[900px] p-0 gap-0 flex flex-col" data-testid="dialog-onboarding-wizard">
         {/* Header with Progress */}
-        <div className="px-8 pt-8 pb-6 border-b border-border/50">
+        <div className="px-4 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6 border-b border-border/50 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-                <Sparkles className="w-6 h-6 text-primary" />
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-2xl font-semibold">Quick Start</h2>
-                <p className="text-sm text-muted-foreground">Create your first AI agent in under 60 seconds</p>
+                <h2 className="text-xl sm:text-2xl font-semibold">Quick Start</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Create your first AI agent in under 60 seconds</p>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground font-medium">
+            <div className="text-xs sm:text-sm text-muted-foreground font-medium">
               Step {step} of 3
             </div>
           </div>
           <Progress value={progress} className="h-1" data-testid="progress-onboarding" />
         </div>
 
-        {/* Step Content */}
-        <div className="px-8 py-8 min-h-[400px]">
+        {/* Step Content - Scrollable */}
+        <div className="px-4 sm:px-8 py-6 sm:py-8 flex-1 overflow-y-auto">
           {step === 1 && (
             <div className="space-y-6">
               <div>
@@ -227,23 +227,23 @@ export function OnboardingWizard({ open, initialProgress, onComplete, onClose }:
                 <p className="text-muted-foreground">Choose your primary goal. You can create more agents later.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {goalOptions.map((goal) => {
                   const Icon = goal.icon;
                   return (
                     <button
                       key={goal.id}
                       onClick={() => setSelectedGoal(goal)}
-                      className={`p-6 rounded-lg border-2 text-left transition-all hover-elevate active-elevate-2 ${
+                      className={`p-4 sm:p-6 rounded-lg border-2 text-left transition-all hover-elevate active-elevate-2 ${
                         selectedGoal?.id === goal.id
                           ? "border-primary bg-primary/5"
                           : "border-border bg-card"
                       }`}
                       data-testid={`button-goal-${goal.id}`}
                     >
-                      <Icon className={`w-8 h-8 mb-3 ${selectedGoal?.id === goal.id ? "text-primary" : "text-muted-foreground"}`} />
-                      <h4 className="font-medium mb-1">{goal.title}</h4>
-                      <p className="text-sm text-muted-foreground">{goal.description}</p>
+                      <Icon className={`w-6 h-6 sm:w-8 sm:h-8 mb-2 sm:mb-3 ${selectedGoal?.id === goal.id ? "text-primary" : "text-muted-foreground"}`} />
+                      <h4 className="font-medium mb-1 text-sm sm:text-base">{goal.title}</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{goal.description}</p>
                     </button>
                   );
                 })}
@@ -335,12 +335,13 @@ export function OnboardingWizard({ open, initialProgress, onComplete, onClose }:
           )}
         </div>
 
-        {/* Footer with Navigation */}
-        <div className="px-8 py-6 border-t border-border/50 flex items-center justify-between bg-card/50">
+        {/* Footer with Navigation - Sticky at bottom */}
+        <div className="px-4 sm:px-8 py-4 sm:py-6 border-t border-border/50 flex items-center justify-between bg-card/50 flex-shrink-0">
           <Button
             variant="ghost"
             onClick={() => setStep(step - 1)}
             disabled={step === 1}
+            size="sm"
             data-testid="button-back"
           >
             Back
@@ -355,6 +356,7 @@ export function OnboardingWizard({ open, initialProgress, onComplete, onClose }:
                   (step === 2 && (!businessName || !industry)) ||
                   saveProgressMutation.isPending
                 }
+                size="sm"
                 data-testid="button-next"
               >
                 {saveProgressMutation.isPending ? "Saving..." : "Continue"}
@@ -363,6 +365,7 @@ export function OnboardingWizard({ open, initialProgress, onComplete, onClose }:
               <Button
                 onClick={handleComplete}
                 disabled={completeMutation.isPending}
+                size="sm"
                 data-testid="button-create-agent"
               >
                 {completeMutation.isPending ? "Creating..." : "Create My Agent"}

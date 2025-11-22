@@ -33,7 +33,7 @@ export function HeroSection() {
           <Button
             size="lg"
             className="h-12 px-6 sm:px-8 text-base shadow-xl w-full sm:w-auto"
-            onClick={() => setLocation('/dashboard')}
+            onClick={() => window.location.href = '/api/login'}
             data-testid="button-get-started"
           >
             Get Started Free

@@ -123,7 +123,7 @@ function getSession() {
 
 // Authentication middleware
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  if (!req.session?.userId) {
+  if (!(req.session as any)?.userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   next();
@@ -375,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUT /api/onboarding/progress - Update onboarding progress
   app.put('/api/onboarding/progress', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ message: "User ID not found in session" });
       }
@@ -422,7 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/onboarding/complete - Complete onboarding and create first agent
   app.post('/api/onboarding/complete', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ message: "User ID not found in session" });
       }
@@ -515,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUT /api/user/profile - Update user profile information
   app.put('/api/user/profile', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ message: "User ID not found in session" });
       }
@@ -541,7 +541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUT /api/user/notifications - Update notification preferences
   app.put('/api/user/notifications', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ message: "User ID not found in session" });
       }
@@ -575,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/agents - List user's agents
   app.get("/api/agents", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -590,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/agents - Create a new agent
   app.post("/api/agents", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -637,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/agents/:id - Get a specific agent
   app.get("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -661,7 +661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PATCH /api/agents/:id - Update an agent
   app.patch("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -698,7 +698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DELETE /api/agents/:id - Delete an agent
   app.delete("/api/agents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -723,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/dashboard/analytics - Get dashboard analytics for the current user
   app.get("/api/dashboard/analytics", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -873,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/conversations - List user's conversations
   app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -888,7 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/conversations/:id/messages - Get all messages in a conversation
   app.get("/api/conversations/:id/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }
@@ -913,7 +913,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/agents/:agentId/chat - Send a message to an agent
   app.post("/api/agents/:agentId/chat", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = (req.session as any).userId;
       if (!userId) {
         return res.status(401).json({ error: "User ID not found in session" });
       }

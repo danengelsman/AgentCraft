@@ -70,8 +70,8 @@ export class DbStorage implements IStorage {
     return user;
   }
 
-  async getUserByResetToken(token: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.resetToken, token));
+  async getUserByResetToken(tokenSelector: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.resetTokenSelector, tokenSelector));
     return user;
   }
 

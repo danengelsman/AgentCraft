@@ -12,8 +12,19 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return await bcrypt.compare(password, hash);
 }
 
+// Generate a secure random token for password reset
 export function generateResetToken(): string {
   return crypto.randomBytes(32).toString('hex');
+}
+
+// Hash the reset token before storing in database
+export async function hashResetToken(token: string): Promise<string> {
+  return await bcrypt.hash(token, SALT_ROUNDS);
+}
+
+// Verify the reset token matches the hashed version
+export async function verifyResetToken(token: string, hash: string): Promise<boolean> {
+  return await bcrypt.compare(token, hash);
 }
 
 export function getResetTokenExpiry(): Date {

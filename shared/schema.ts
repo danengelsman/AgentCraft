@@ -28,6 +28,7 @@ export const users = pgTable("users", {
   emailNotifications: integer("email_notifications").notNull().default(1),
   weeklyReports: integer("weekly_reports").notNull().default(0),
   resetToken: varchar("reset_token"),
+  resetTokenSelector: varchar("reset_token_selector"),
   resetTokenExpiry: timestamp("reset_token_expiry"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

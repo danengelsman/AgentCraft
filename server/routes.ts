@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboardingProgressUpdateSchema, userProfileUpdateSchema, userNotificationsUpdateSchema, signupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
 import { generateAgentResponse, getSystemPromptForTemplate } from "./services/ai";
-import { hashPassword, verifyPassword, generateResetToken, getResetTokenExpiry, isResetTokenValid } from "./services/auth";
+import { hashPassword, verifyPassword, generateResetToken, hashResetToken, verifyResetToken, getResetTokenExpiry, isResetTokenValid } from "./services/auth";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "./services/email";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -156,6 +156,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: validatedData.lastName,
       });
 
+      // Regenerate session to prevent session fixation
+      await new Promise<void>((resolve, reject) => {
+        req.session.regenerate((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
       // Set session
       (req.session as any).userId = user.id;
 
@@ -194,6 +202,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isValid) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
+
+      // Regenerate session to prevent session fixation
+      await new Promise<void>((resolve, reject) => {
+        req.session.regenerate((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
 
       // Set session
       (req.session as any).userId = user.id;
@@ -235,19 +251,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "If that email is registered, a reset link has been sent" });
       }
 
-      // Generate reset token
-      const resetToken = generateResetToken();
+      // Generate two tokens: selector (for lookup) and verifier (for validation)
+      const tokenSelector = generateResetToken(); // Unhashed, for DB lookup
+      const tokenVerifier = generateResetToken(); // Will be hashed for security
       const resetTokenExpiry = getResetTokenExpiry();
 
-      // Save token to database
+      // Hash the verifier token before storing
+      const hashedVerifier = await hashResetToken(tokenVerifier);
+
+      // Save selector (unhashed) and hashed verifier to database
       await storage.updateUser(user.id, {
-        resetToken,
+        resetTokenSelector: tokenSelector,
+        resetToken: hashedVerifier,
         resetTokenExpiry,
       });
 
-      // Send reset email
+      // Send email with combined token: selector:verifier
+      const combinedToken = `${tokenSelector}:${tokenVerifier}`;
       const baseUrl = `${req.protocol}://${req.get('host')}`;
-      await sendPasswordResetEmail(user.email, resetToken, baseUrl);
+      await sendPasswordResetEmail(user.email, combinedToken, baseUrl);
 
       res.json({ message: "If that email is registered, a reset link has been sent" });
     } catch (error) {
@@ -266,24 +288,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = resetPasswordSchema.parse(req.body);
       
-      // Find user by reset token
-      const user = await storage.getUserByResetToken(validatedData.token);
-      if (!user) {
+      // Split the combined token into selector and verifier
+      const parts = validatedData.token.split(':');
+      if (parts.length !== 2) {
+        return res.status(400).json({ message: "Invalid reset token format" });
+      }
+      
+      const [tokenSelector, tokenVerifier] = parts;
+      
+      // Look up user by unhashed selector
+      const user = await storage.getUserByResetToken(tokenSelector);
+      
+      if (!user || !user.resetToken || !user.resetTokenSelector) {
         return res.status(400).json({ message: "Invalid or expired reset token" });
       }
 
-      // Check if token is still valid
+      // Check if token is still valid (time-based)
       if (!isResetTokenValid(user.resetTokenExpiry)) {
         return res.status(400).json({ message: "Reset token has expired" });
+      }
+
+      // Verify the verifier token matches the hashed version in DB
+      const isTokenValid = await verifyResetToken(tokenVerifier, user.resetToken);
+      if (!isTokenValid) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
       }
 
       // Hash new password
       const hashedPassword = await hashPassword(validatedData.password);
 
-      // Update password and clear reset token
+      // Update password and clear reset tokens
       await storage.updateUser(user.id, {
         password: hashedPassword,
         resetToken: null,
+        resetTokenSelector: null,
         resetTokenExpiry: null,
       });
 

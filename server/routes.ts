@@ -1,9 +1,12 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboardingProgressUpdateSchema, userProfileUpdateSchema, userNotificationsUpdateSchema } from "@shared/schema";
+import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboardingProgressUpdateSchema, userProfileUpdateSchema, userNotificationsUpdateSchema, signupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
 import { generateAgentResponse, getSystemPromptForTemplate } from "./services/ai";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { hashPassword, verifyPassword, generateResetToken, getResetTokenExpiry, isResetTokenValid } from "./services/auth";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "./services/email";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
 import { z } from "zod";
 
 // Helper function to format timestamps as relative time
@@ -94,21 +97,224 @@ const templates = [
   },
 ];
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication
-  await setupAuth(app);
+// Session setup
+function getSession() {
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: false,
+    ttl: sessionTtl,
+    tableName: "sessions",
+  });
+  return session({
+    secret: process.env.SESSION_SECRET!,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: sessionTtl,
+    },
+  });
+}
 
-  // Auth endpoint - get current user
+// Authentication middleware
+export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  if (!req.session?.userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+};
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup session
+  app.set("trust proxy", 1);
+  app.use(getSession());
+
+  // POST /api/auth/signup - Register new user
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const validatedData = signupSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+
+      // Hash password
+      const hashedPassword = await hashPassword(validatedData.password);
+
+      // Create user
+      const user = await storage.createUser({
+        email: validatedData.email,
+        password: hashedPassword,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+      });
+
+      // Set session
+      (req.session as any).userId = user.id;
+
+      // Send welcome email (non-blocking)
+      sendWelcomeEmail(user.email, user.firstName || undefined).catch(err => 
+        console.error('Welcome email failed:', err)
+      );
+
+      // Return user without password
+      const { password, resetToken, resetTokenExpiry, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword });
+    } catch (error) {
+      console.error("Error in signup:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  // POST /api/auth/login - Login user
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(validatedData.email);
+      if (!user || !user.password) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Verify password
+      const isValid = await verifyPassword(validatedData.password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Set session
+      (req.session as any).userId = user.id;
+
+      // Return user without password
+      const { password, resetToken, resetTokenExpiry, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword });
+    } catch (error) {
+      console.error("Error in login:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      
+      res.status(500).json({ message: "Failed to login" });
+    }
+  });
+
+  // POST /api/auth/logout - Logout user
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ success: true });
+    });
+  });
+
+  // POST /api/auth/forgot-password - Request password reset
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const validatedData = forgotPasswordSchema.parse(req.body);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(validatedData.email);
+      if (!user) {
+        // Don't reveal if email exists or not
+        return res.json({ message: "If that email is registered, a reset link has been sent" });
+      }
+
+      // Generate reset token
+      const resetToken = generateResetToken();
+      const resetTokenExpiry = getResetTokenExpiry();
+
+      // Save token to database
+      await storage.updateUser(user.id, {
+        resetToken,
+        resetTokenExpiry,
+      });
+
+      // Send reset email
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      await sendPasswordResetEmail(user.email, resetToken, baseUrl);
+
+      res.json({ message: "If that email is registered, a reset link has been sent" });
+    } catch (error) {
+      console.error("Error in forgot-password:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      
+      res.status(500).json({ message: "Failed to process password reset request" });
+    }
+  });
+
+  // POST /api/auth/reset-password - Reset password with token
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const validatedData = resetPasswordSchema.parse(req.body);
+      
+      // Find user by reset token
+      const user = await storage.getUserByResetToken(validatedData.token);
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      // Check if token is still valid
+      if (!isResetTokenValid(user.resetTokenExpiry)) {
+        return res.status(400).json({ message: "Reset token has expired" });
+      }
+
+      // Hash new password
+      const hashedPassword = await hashPassword(validatedData.password);
+
+      // Update password and clear reset token
+      await storage.updateUser(user.id, {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      });
+
+      res.json({ message: "Password reset successful" });
+    } catch (error) {
+      console.error("Error in reset-password:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
+  // GET /api/auth/user - Get current authenticated user
   app.get('/api/auth/user', async (req, res) => {
     try {
-      // Return null if not authenticated (instead of 401)
-      const userId = req.user?.claims?.sub;
-      if (!req.isAuthenticated() || !userId) {
+      const userId = (req.session as any)?.userId;
+      if (!userId) {
         return res.json(null);
       }
       
       const user = await storage.getUser(userId);
-      res.json(user);
+      if (!user) {
+        return res.json(null);
+      }
+
+      // Return user without password
+      const { password, resetToken, resetTokenExpiry, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -118,10 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/onboarding/progress - Get user's onboarding progress
   app.get('/api/onboarding/progress', isAuthenticated, async (req, res) => {
     try {
-      const userId = req.user?.claims?.sub;
-      if (!userId) {
-        return res.status(401).json({ message: "User ID not found in session" });
-      }
+      const userId = (req.session as any).userId;
 
       const progress = await storage.getOnboardingProgress(userId);
       res.json(progress || null);

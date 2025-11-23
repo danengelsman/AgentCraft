@@ -12,6 +12,10 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import Home from "@/pages/Home";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import Agents from "@/pages/Agents";
 import Templates from "@/pages/Templates";
@@ -38,7 +42,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    window.location.href = '/api/login';
+    window.location.href = '/login';
     return null;
   }
 
@@ -61,7 +65,15 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.location.href = '/api/logout'}
+                onClick={async () => {
+                  try {
+                    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                    window.location.href = '/login';
+                  } catch (error) {
+                    console.error('Logout failed:', error);
+                    window.location.href = '/login';
+                  }
+                }}
                 data-testid="button-logout"
               >
                 Log Out
@@ -84,6 +96,10 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/dashboard">
         {() => (
           <DashboardLayout>

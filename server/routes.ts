@@ -1,4 +1,4 @@
-import type { Express, RequestHandler } from "express";
+import type { Express, Request, Response, NextFunction, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboardingProgressUpdateSchema, userProfileUpdateSchema, userNotificationsUpdateSchema, signupSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/auth/reset-password - Reset password with token
-  app.post('/api/auth/reset-password', async (req, res) => {
+  app.post('/api/auth/reset-password', passwordResetRateLimiter, async (req, res) => {
     try {
       const validatedData = resetPasswordSchema.parse(req.body);
       
@@ -609,7 +609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/agents - List user's agents
-  app.get("/api/agents", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agents", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -624,7 +624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/agents - Create a new agent
-  app.post("/api/agents", isAuthenticated, async (req: any, res) => {
+  app.post("/api/agents", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -671,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/agents/:id - Get a specific agent
-  app.get("/api/agents/:id", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agents/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -695,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PATCH /api/agents/:id - Update an agent
-  app.patch("/api/agents/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/agents/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE /api/agents/:id - Delete an agent
-  app.delete("/api/agents/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/agents/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -757,7 +757,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/dashboard/analytics - Get dashboard analytics for the current user
-  app.get("/api/dashboard/analytics", isAuthenticated, async (req: any, res) => {
+  app.get("/api/dashboard/analytics", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -907,7 +907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/conversations - List user's conversations
-  app.get("/api/conversations", isAuthenticated, async (req: any, res) => {
+  app.get("/api/conversations", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -921,8 +921,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET /api/conversations/:id/messages - Get all messages in a conversation
-  app.get("/api/conversations/:id/messages", isAuthenticated, async (req: any, res) => {
+  // GET /api/conversations/:id/messages - Get all messages in a conversation with pagination
+  app.get("/api/conversations/:id/messages", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {
@@ -939,7 +939,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const messages = await storage.getMessagesByConversationId(req.params.id);
+      // Parse pagination parameters with defaults
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Validate pagination parameters
+      if (limit < 1 || limit > 100) {
+        return res.status(400).json({ error: "Limit must be between 1 and 100" });
+      }
+      if (offset < 0) {
+        return res.status(400).json({ error: "Offset must be non-negative" });
+      }
+
+      const messages = await storage.getMessagesByConversationId(req.params.id, limit, offset);
       res.json(messages);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch messages" });
@@ -947,7 +959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/agents/:agentId/chat - Send a message to an agent
-  app.post("/api/agents/:agentId/chat", isAuthenticated, async (req: any, res) => {
+  app.post("/api/agents/:agentId/chat", isAuthenticated, aiRateLimiter, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId;
       if (!userId) {

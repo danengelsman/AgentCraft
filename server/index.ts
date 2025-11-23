@@ -5,6 +5,7 @@ import { setupVite, serveStatic } from "./vite";
 import { config, isProduction } from "./config/production";
 import logger, { requestLogger } from "./services/logger";
 import { securityHeaders, generalRateLimiter, sanitizeInput } from "./middleware/security";
+import { globalErrorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 const app = express();
 
@@ -74,13 +75,11 @@ if (isProduction) {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
+  // 404 handler - must be before error handler
+  app.use('/api/*', notFoundHandler);
+  
+  // Global error handler - must be last
+  app.use(globalErrorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route

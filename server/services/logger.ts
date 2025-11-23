@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { Request, Response, NextFunction } from 'express';
 import { config } from '../config/production';
 
 // Define log format
@@ -58,7 +59,7 @@ export const createLogger = (module: string) => {
 };
 
 // Request logging middleware
-export const requestLogger = (req: any, res: any, next: any) => {
+export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
   const { method, url, ip } = req;
   

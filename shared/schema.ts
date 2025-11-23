@@ -15,24 +15,28 @@ export const sessions = pgTable(
 );
 
 // User storage table - email/password authentication
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").notNull().unique(),
-  password: varchar("password").notNull(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  businessName: varchar("business_name"),
-  industry: varchar("industry"),
-  goal: text("goal"),
-  emailNotifications: integer("email_notifications").notNull().default(1),
-  weeklyReports: integer("weekly_reports").notNull().default(0),
-  resetToken: varchar("reset_token"),
-  resetTokenSelector: varchar("reset_token_selector"),
-  resetTokenExpiry: timestamp("reset_token_expiry"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    email: varchar("email").notNull().unique(), // unique constraint automatically creates an index
+    password: varchar("password").notNull(),
+    firstName: varchar("first_name"),
+    lastName: varchar("last_name"),
+    profileImageUrl: varchar("profile_image_url"),
+    businessName: varchar("business_name"),
+    industry: varchar("industry"),
+    goal: text("goal"),
+    emailNotifications: integer("email_notifications").notNull().default(1),
+    weeklyReports: integer("weekly_reports").notNull().default(0),
+    resetToken: varchar("reset_token"),
+    resetTokenSelector: varchar("reset_token_selector"),
+    resetTokenExpiry: timestamp("reset_token_expiry"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  }
+  // Note: email already has a unique constraint which automatically creates an index
+);
 
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
@@ -123,17 +127,23 @@ export const resetPasswordSchema = z.object({
     .regex(/[0-9]/, "Password must contain at least one number"),
 });
 
-export const agents = pgTable("agents", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-  template: text("template").notNull(),
-  systemPrompt: text("system_prompt").notNull(),
-  status: text("status").notNull().default("active"),
-  icon: text("icon"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const agents = pgTable(
+  "agents",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull().references(() => users.id),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    template: text("template").notNull(),
+    systemPrompt: text("system_prompt").notNull(),
+    status: text("status").notNull().default("active"),
+    icon: text("icon"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_agents_userId").on(table.userId), // Index for faster user agent lookups
+  ]
+);
 
 export const insertAgentSchema = createInsertSchema(agents).omit({
   id: true,
@@ -143,14 +153,21 @@ export const insertAgentSchema = createInsertSchema(agents).omit({
 export type InsertAgent = z.infer<typeof insertAgentSchema>;
 export type Agent = typeof agents.$inferSelect;
 
-export const conversations = pgTable("conversations", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  agentId: varchar("agent_id").notNull().references(() => agents.id),
-  userId: varchar("user_id").notNull().references(() => users.id),
-  title: text("title"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    agentId: varchar("agent_id").notNull().references(() => agents.id),
+    userId: varchar("user_id").notNull().references(() => users.id),
+    title: text("title"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_conversations_userId").on(table.userId), // Index for user conversation lookups
+    index("idx_conversations_agentId").on(table.agentId), // Index for agent conversation lookups
+  ]
+);
 
 export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,
@@ -161,13 +178,19 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 
-export const messages = pgTable("messages", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
-  role: text("role").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const messages = pgTable(
+  "messages",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    conversationId: varchar("conversation_id").notNull().references(() => conversations.id),
+    role: text("role").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_messages_conversationId").on(table.conversationId), // Index for conversation message lookups
+  ]
+);
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,

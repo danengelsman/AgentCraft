@@ -49,7 +49,7 @@ export interface IStorage {
   createConversation(conversation: InsertConversation): Promise<Conversation>;
 
   // Messages
-  getMessagesByConversationId(conversationId: string): Promise<Message[]>;
+  getMessagesByConversationId(conversationId: string, limit?: number, offset?: number): Promise<Message[]>;
   getMessagesByConversationIds(conversationIds: string[]): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
 
@@ -172,8 +172,22 @@ export class DbStorage implements IStorage {
   }
 
   // Messages
-  async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
-    return db.select().from(messages).where(eq(messages.conversationId, conversationId)).orderBy(messages.createdAt);
+  async getMessagesByConversationId(conversationId: string, limit: number = 50, offset: number = 0): Promise<Message[]> {
+    let query = db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(messages.createdAt);
+    
+    // Apply pagination
+    if (limit > 0) {
+      query = query.limit(limit);
+    }
+    if (offset > 0) {
+      query = query.offset(offset);
+    }
+    
+    return query;
   }
 
   async getMessagesByConversationIds(conversationIds: string[]): Promise<Message[]> {

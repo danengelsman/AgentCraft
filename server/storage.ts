@@ -191,21 +191,15 @@ export class DbStorage implements IStorage {
 
   // Messages
   async getMessagesByConversationId(conversationId: string, limit: number = 50, offset: number = 0): Promise<Message[]> {
-    let query = db
+    const result = await db
       .select()
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
-      .orderBy(messages.createdAt);
+      .orderBy(messages.createdAt)
+      .limit(limit)
+      .offset(offset);
     
-    // Apply pagination
-    if (limit > 0) {
-      query = query.limit(limit);
-    }
-    if (offset > 0) {
-      query = query.offset(offset);
-    }
-    
-    return query;
+    return result;
   }
 
   async getMessagesByConversationIds(conversationIds: string[]): Promise<Message[]> {

@@ -2,11 +2,9 @@ import { PricingCard } from "@/components/PricingCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface SubscriptionData {
   subscriptionTier: 'free' | 'pro';
@@ -22,13 +20,13 @@ export default function Subscription() {
     queryKey: ['/api/stripe/subscription'],
   });
 
-  const handleUpgrade = async (priceId: string) => {
+  const handleUpgrade = async (_priceId: string) => {
     try {
-      const response = await apiRequest('POST', '/api/stripe/checkout', { priceId });
-      const { url } = await response.json();
+      const response = await apiRequest('POST', '/api/stripe/checkout', { priceId: _priceId });
+      const data = await response.json() as { url?: string };
       
-      if (url) {
-        window.location.href = url;
+      if (data.url) {
+        window.location.href = data.url;
       }
     } catch (error) {
       toast({
@@ -39,7 +37,7 @@ export default function Subscription() {
     }
   };
 
-  const currentPlan = subscription?.subscriptionTier || 'free';
+  const currentPlan: string = subscription?.subscriptionTier || 'free';
   const usageStats = {
     messages: {
       used: currentPlan === 'pro' ? 5000 : 47,
@@ -143,7 +141,7 @@ export default function Subscription() {
           ctaText={currentPlan === "pro" ? "Current Plan" : "Upgrade to Pro"}
           onSelect={() => {
             if (currentPlan !== "pro") {
-              handleUpgrade("price_1ABC"); // This will be replaced with actual Stripe price ID
+              handleUpgrade("price_1SWgYAA1GxLFh6PHXG4MQnjK");
             }
           }}
           disabled={currentPlan === "pro"}

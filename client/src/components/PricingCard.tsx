@@ -11,6 +11,7 @@ interface PricingCardProps {
   highlighted?: boolean;
   ctaText?: string;
   onSelect?: () => void;
+  disabled?: boolean;
 }
 
 export function PricingCard({
@@ -21,12 +22,14 @@ export function PricingCard({
   highlighted = false,
   ctaText = "Get Started",
   onSelect,
+  disabled = false,
 }: PricingCardProps) {
   return (
     <Card
       className={cn(
         "hover-elevate overflow-visible",
-        highlighted && "border-primary border-2"
+        highlighted && "border-primary border-2",
+        disabled && "opacity-75"
       )}
       data-testid={`card-pricing-${name.toLowerCase()}`}
     >
@@ -53,6 +56,7 @@ export function PricingCard({
           className="w-full"
           variant={highlighted ? "default" : "outline"}
           onClick={onSelect}
+          disabled={disabled}
           data-testid={`button-select-${name.toLowerCase()}`}
         >
           {ctaText}

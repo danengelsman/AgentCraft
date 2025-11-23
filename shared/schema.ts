@@ -32,6 +32,9 @@ export const users = pgTable(
     resetToken: varchar("reset_token"),
     resetTokenSelector: varchar("reset_token_selector"),
     resetTokenExpiry: timestamp("reset_token_expiry"),
+    stripeCustomerId: varchar("stripe_customer_id"),
+    stripeSubscriptionId: varchar("stripe_subscription_id"),
+    subscriptionTier: varchar("subscription_tier").notNull().default("free"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
   }

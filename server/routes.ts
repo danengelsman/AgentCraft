@@ -5,6 +5,9 @@ import { insertAgentSchema, insertMessageSchema, insertConversationSchema, onboa
 import { generateAgentResponse, getSystemPromptForTemplate } from "./services/ai";
 import { hashPassword, verifyPassword, generateResetToken, hashResetToken, verifyResetToken, getResetTokenExpiry, isResetTokenValid } from "./services/auth";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "./services/email";
+import { stripeService } from "./stripeService";
+import { stripeStorage } from "./stripeStorage";
+import { getStripePublishableKey } from "./stripeClient";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { z } from "zod";

@@ -26,6 +26,9 @@ export interface IStorage {
   // Database health
   checkDatabaseConnection(): Promise<void>;
   
+  // Stripe operations
+  updateUserStripeInfo(userId: string, stripeInfo: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionTier?: string }): Promise<User | undefined>;
+  
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -66,6 +69,12 @@ export class DbStorage implements IStorage {
   async checkDatabaseConnection(): Promise<void> {
     // Simple query to check database connectivity
     await db.execute('SELECT 1');
+  }
+
+  // Stripe operations
+  async updateUserStripeInfo(userId: string, stripeInfo: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionTier?: string }): Promise<User | undefined> {
+    const [user] = await db.update(users).set(stripeInfo).where(eq(users.id, userId)).returning();
+    return user;
   }
 
   // Users

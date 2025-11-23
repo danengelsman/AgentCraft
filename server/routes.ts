@@ -167,16 +167,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Set session
       (req.session as any).userId = user.id;
 
-      // Send welcome email (non-blocking)
-      sendWelcomeEmail(user.email, user.firstName || undefined).catch(err => 
-        console.error('Welcome email failed:', err)
-      );
+      // Send welcome email (non-blocking - fire and forget)
+      sendWelcomeEmail(user.email, user.firstName || undefined)
+        .then(() => console.log(`[AUTH] Welcome email queued for ${user.email}`))
+        .catch(err => console.warn(`[AUTH] Welcome email failed (non-critical):`, err?.message));
 
       // Return user without password
-      const { password, resetToken, resetTokenExpiry, ...userWithoutPassword } = user;
+      const { password, resetToken, resetTokenExpiry, resetTokenSelector, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword });
-    } catch (error) {
-      console.error("Error in signup:", error);
+    } catch (error: any) {
+      console.error("[AUTH] Signup error:", error?.message || error);
       
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });

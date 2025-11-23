@@ -102,10 +102,11 @@ export async function sendWelcomeEmail(email: string, firstName?: string) {
       `,
     });
     
+    console.log(`[EMAIL] Welcome email sent successfully to ${email}`);
     return true;
-  } catch (error) {
-    console.error('Failed to send welcome email:', error);
-    // Don't throw - welcome email is not critical
+  } catch (error: any) {
+    // Silently log and continue - welcome email is not critical for signup
+    console.warn(`[EMAIL] Could not send welcome email to ${email}:`, error?.message || 'Unknown error');
     return false;
   }
 }

@@ -8,6 +8,11 @@ import { sendPasswordResetEmail, sendWelcomeEmail } from "./services/email";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { z } from "zod";
+import { authRateLimiter, passwordResetRateLimiter, aiRateLimiter, auditMiddleware } from "./middleware/security";
+import { createLogger, auditLog } from "./services/logger";
+import { config } from "./config/production";
+
+const logger = createLogger('routes');
 
 // Helper function to format timestamps as relative time
 function formatTimeAgo(date: Date): string {
@@ -131,11 +136,42 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup session
-  app.set("trust proxy", 1);
+  app.set("trust proxy", config.TRUST_PROXY);
   app.use(getSession());
 
+  // Health check endpoint (no auth required)
+  app.get('/api/health', (req, res) => {
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: config.NODE_ENV,
+      version: process.env.npm_package_version || '1.0.0',
+    });
+  });
+
+  // Readiness check (checks database connection)
+  app.get('/api/ready', async (req, res) => {
+    try {
+      // Check database connection
+      const testUser = await storage.getUserByEmail('health-check@test.com');
+      res.json({
+        status: 'ready',
+        database: 'connected',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      logger.error('Readiness check failed', { error });
+      res.status(503).json({
+        status: 'not ready',
+        database: 'disconnected',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
   // POST /api/auth/signup - Register new user
-  app.post('/api/auth/signup', async (req, res) => {
+  app.post('/api/auth/signup', authRateLimiter, auditMiddleware('signup'), async (req, res) => {
     try {
       const validatedData = signupSchema.parse(req.body);
       
@@ -187,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/auth/login - Login user
-  app.post('/api/auth/login', async (req, res) => {
+  app.post('/api/auth/login', authRateLimiter, auditMiddleware('login'), async (req, res) => {
     try {
       const validatedData = loginSchema.parse(req.body);
       
@@ -240,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/auth/forgot-password - Request password reset
-  app.post('/api/auth/forgot-password', async (req, res) => {
+  app.post('/api/auth/forgot-password', passwordResetRateLimiter, auditMiddleware('forgot-password'), async (req, res) => {
     try {
       const validatedData = forgotPasswordSchema.parse(req.body);
       

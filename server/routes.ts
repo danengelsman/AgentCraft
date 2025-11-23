@@ -402,6 +402,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/onboarding/progress', isAuthenticated, async (req, res) => {
     try {
       const userId = req.session.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found in session" });
+      }
 
       const progress = await storage.getOnboardingProgress(userId);
       res.json(progress || null);
@@ -603,6 +606,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ message: "Failed to update notifications" });
+    }
+  });
+
+  // GET /api/stripe/publishable-key - Get Stripe publishable key for frontend
+  app.get('/api/stripe/publishable-key', async (req, res) => {
+    try {
+      const key = await getStripePublishableKey();
+      res.json({ publishableKey: key });
+    } catch (error) {
+      console.error('Error fetching publishable key:', error);
+      res.status(500).json({ error: 'Failed to fetch payment configuration' });
+    }
+  });
+
+  // POST /api/stripe/checkout - Create checkout session
+  app.post('/api/stripe/checkout', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { priceId } = req.body;
+      if (!priceId) {
+        return res.status(400).json({ error: 'Price ID is required' });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripeService.createCustomer(user.email, userId);
+        await storage.updateUserStripeInfo(userId, { stripeCustomerId: customer.id });
+        customerId = customer.id;
+      }
+
+      const successUrl = `${req.protocol}://${req.get('host')}/subscription?success=true`;
+      const cancelUrl = `${req.protocol}://${req.get('host')}/subscription?canceled=true`;
+
+      const session = await stripeService.createCheckoutSession(
+        customerId,
+        priceId,
+        successUrl,
+        cancelUrl
+      );
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error('Checkout error:', error);
+      res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+  });
+
+  // GET /api/stripe/subscription - Get user's subscription status
+  app.get('/api/stripe/subscription', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json({
+        subscriptionTier: user.subscriptionTier || 'free',
+        stripeCustomerId: user.stripeCustomerId,
+        stripeSubscriptionId: user.stripeSubscriptionId,
+      });
+    } catch (error) {
+      console.error('Subscription fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch subscription' });
     }
   });
 

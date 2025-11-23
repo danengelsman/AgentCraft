@@ -31,11 +31,11 @@ export class StripeService {
   }
 
   async getProduct(productId: string) {
-    return await storage.getProduct(productId);
+    return await stripeStorage.getProduct(productId);
   }
 
   async getSubscription(subscriptionId: string) {
-    return await storage.getSubscription(subscriptionId);
+    return await stripeStorage.getSubscription(subscriptionId);
   }
 }
 

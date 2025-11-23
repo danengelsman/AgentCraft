@@ -41,8 +41,7 @@ async function initStripe() {
   try {
     console.log('Initializing Stripe schema...');
     await runMigrations({ 
-      databaseUrl,
-      schema: 'stripe'
+      databaseUrl
     });
     console.log('Stripe schema ready');
 
@@ -64,7 +63,7 @@ async function initStripe() {
       .then(() => {
         console.log('Stripe data synced');
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         console.error('Error syncing Stripe data:', err);
       });
   } catch (error) {

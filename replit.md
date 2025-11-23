@@ -37,6 +37,12 @@ The application implements a premium luxury design system inspired by Apple's pr
 - Custom hooks in `client/src/hooks/` for mobile detection and toast notifications
 
 **Recent Updates (November 2024):**
+- **Authentication System Migration**: Migrated from Replit OAuth to email/password authentication for mobile compatibility
+  - Secure password hashing with bcrypt (10 salt rounds)
+  - Session-based authentication with session regeneration on login/signup to prevent session fixation attacks
+  - Password reset with selector/verifier token pattern (hashed storage) for enhanced security
+  - Welcome and password reset emails via Resend integration
+  - Full auth UI: Login, Signup, Forgot Password, Reset Password pages with Apple-inspired premium design
 - Expanded templates from 3 to 12 total, covering comprehensive business automation use cases
 - Connected all 12 templates to agent creation system with Zod validation and unique system prompts
 - Implemented Quick Start Wizard: 3-step onboarding (Welcome → Business context → Instant agent) with progress persistence and auto-open for new users
@@ -51,7 +57,6 @@ The application implements a premium luxury design system inspired by Apple's pr
 - Added 5 pre-built example agents to Agent Gallery with performance metrics and clone functionality
 - Implemented comprehensive mobile optimization with hamburger navigation, responsive typography (4xl→7xl scaling), and touch-friendly interfaces
 - Updated branding to use custom neural network "A" logo (blue metallic with silver circular frame)
-- Full authentication implementation with Replit Auth (OIDC)
 
 **Key Features:**
 - **Quick Start Wizard**: 3-step guided onboarding that creates first agent in <60 seconds (Welcome/goal selection → Business context → Instant agent creation)
@@ -123,9 +128,18 @@ The application uses a database-backed storage layer (DbStorage) implementing th
 
 **Schema Design (Current):**
 Located in `shared/schema.ts`:
-- `users` table with UUID primary keys, username (unique), and password fields
+- `users` table with:
+  - Email/password authentication fields (email unique, password hashed with bcrypt)
+  - Profile fields: firstName, lastName, profileImageUrl
+  - Business context: businessName, industry, goal
+  - Notification preferences: emailNotifications, weeklyReports
+  - Password reset: resetToken (hashed), resetTokenSelector (unhashed for lookup), resetTokenExpiry
+  - Security pattern: Selector/verifier token design for password reset
+- `sessions` table for Express session storage (connect-pg-simple)
+- `onboarding_progress` table tracking wizard completion
+- `agents`, `conversations`, `messages`, and `analytics` tables for core features
 - Zod schema validation via drizzle-zod integration
-- Type-safe InsertUser and User types exported
+- Type-safe Insert/Select types exported for all models
 
 **Migration Strategy:**
 - Drizzle Kit for schema migrations
@@ -162,6 +176,7 @@ The current schema is minimal. The application will need additional tables for:
 - **Stripe**: Payment processing and invoice reminders
 - **Zapier**: Trigger workflows from agents
 - **OpenAI**: AI/LLM services for agent intelligence (configured)
+- **Resend**: Email delivery for password resets and welcome emails (configured)
 
 **Build and Deployment:**
 - Development: Concurrent Vite dev server + TSX server execution

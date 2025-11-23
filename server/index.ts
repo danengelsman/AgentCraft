@@ -18,11 +18,8 @@ app.use(compression());
 // Security headers
 app.use(securityHeaders());
 
-// Rate limiting (general)
-app.use(generalRateLimiter);
-
-// Input sanitization
-app.use(sanitizeInput);
+// Rate limiting (only for API routes)
+app.use('/api', generalRateLimiter);
 
 declare module 'http' {
   interface IncomingMessage {

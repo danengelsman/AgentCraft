@@ -23,6 +23,9 @@ import { db } from "./db";
 import { eq, and, desc, inArray } from "drizzle-orm";
 
 export interface IStorage {
+  // Database health
+  checkDatabaseConnection(): Promise<void>;
+  
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -59,6 +62,12 @@ export interface IStorage {
 }
 
 export class DbStorage implements IStorage {
+  // Database health check
+  async checkDatabaseConnection(): Promise<void> {
+    // Simple query to check database connectivity
+    await db.execute('SELECT 1');
+  }
+
   // Users
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));

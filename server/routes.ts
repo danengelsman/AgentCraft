@@ -153,8 +153,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Readiness check (checks database connection)
   app.get('/api/ready', async (req, res) => {
     try {
-      // Check database connection
-      const testUser = await storage.getUserByEmail('health-check@test.com');
+      // Check database connection with minimal query
+      await storage.checkDatabaseConnection();
       res.json({
         status: 'ready',
         database: 'connected',

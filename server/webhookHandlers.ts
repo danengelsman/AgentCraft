@@ -9,8 +9,6 @@ export class WebhookHandlers {
     signature: string,
     expectedUuid: string
   ): Promise<void> {
-    // If you’re using stripe-replit-sync, you might validate uuid there;
-    // keep this check if it's important for multi-tenant setups.
     if (!expectedUuid) {
       console.warn("Received webhook without UUID");
     }

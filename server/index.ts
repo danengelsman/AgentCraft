@@ -1,8 +1,8 @@
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
 import compression from "compression";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
-import { env } from "./config/env";
+import { config, isProduction } from "./config/production";
 import logger, { requestLogger } from "./services/logger";
 import {
   securityHeaders,
@@ -16,27 +16,39 @@ import {
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./stripeClient";
 import { WebhookHandlers } from "./webhookHandlers";
+import { env } from "./config/env";
 
 const app = express();
 
-// Logger
+// Initialize logger
 const log = logger.info.bind(logger);
 
-// Early middleware
+// -----------------------------------------------------------------------------
+// Core middleware
+// -----------------------------------------------------------------------------
+
+// Compression (early)
 app.use(compression());
+
+// Security headers
 app.use(securityHeaders());
+
+// Rate limiting for API routes
 app.use("/api", generalRateLimiter);
 
-// Extend IncomingMessage for rawBody
+// If you want to use input sanitization globally later:
+// app.use(sanitizeInput);
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
   }
 }
 
-// ------------------------------
-// Stripe Initialization
-// ------------------------------
+// -----------------------------------------------------------------------------
+// Stripe initialization
+// -----------------------------------------------------------------------------
+
 async function initStripe() {
   try {
     console.log("Initializing Stripe schema...");
@@ -52,24 +64,26 @@ async function initStripe() {
     console.log("Setting up managed webhook...");
 
     const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
-    const { webhook, uuid } =
-      await stripeSync.findOrCreateManagedWebhook(
-        `${webhookBaseUrl}/api/stripe/webhook`,
-        {
-          enabled_events: ["*"],
-          description: "Managed webhook for Stripe sync",
-        }
-      );
+
+    const { webhook, uuid } = await stripeSync.findOrCreateManagedWebhook(
+      `${webhookBaseUrl}/api/stripe/webhook`,
+      {
+        enabled_events: ["*"],
+        description: "Managed webhook for Stripe sync",
+      }
+    );
 
     console.log(`Webhook configured: ${webhook.url}`);
 
     console.log("Syncing Stripe data...");
     stripeSync
       .syncBackfill()
-      .then(() => console.log("Stripe data synced"))
-      .catch((err: Error) =>
-        console.error("Error syncing Stripe data:", err)
-      );
+      .then(() => {
+        console.log("Stripe data synced");
+      })
+      .catch((err: Error) => {
+        console.error("Error syncing Stripe data:", err);
+      });
   } catch (error) {
     console.error("Failed to initialize Stripe:", error);
   }
@@ -77,9 +91,10 @@ async function initStripe() {
 
 await initStripe();
 
-// ------------------------------
-// Stripe Webhook Route (raw body)
-// ------------------------------
+// -----------------------------------------------------------------------------
+// Stripe webhook route (must use raw body, before express.json)
+// -----------------------------------------------------------------------------
+
 app.post(
   "/api/stripe/webhook/:uuid",
   express.raw({ type: "application/json" }),
@@ -113,24 +128,30 @@ app.post(
   }
 );
 
-// ------------------------------
-// Apply JSON middleware AFTER webhook
-// ------------------------------
+// -----------------------------------------------------------------------------
+// JSON / URL-encoded middleware (after webhook)
+// -----------------------------------------------------------------------------
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {
+      // keep original raw body available for any other handlers that need it
       req.rawBody = buf;
     },
   })
 );
+
 app.use(express.urlencoded({ extended: false }));
 
-// ------------------------------
-// Request Logging
-// ------------------------------
-if (env.NODE_ENV === "production") {
+// -----------------------------------------------------------------------------
+// Logging
+// -----------------------------------------------------------------------------
+
+if (isProduction) {
+  // Structured logging in production
   app.use(requestLogger);
 } else {
+  // Simple console logging in development
   app.use((req, res, next) => {
     const start = Date.now();
     const path = req.path;
@@ -162,27 +183,28 @@ if (env.NODE_ENV === "production") {
   });
 }
 
-// ------------------------------
-// Main App Initialization
-// ------------------------------
+// -----------------------------------------------------------------------------
+// Main bootstrap
+// -----------------------------------------------------------------------------
+
 (async () => {
   const server = await registerRoutes(app);
 
-  // 404 BEFORE global error handler
+  // 404 handler - must be before error handler
   app.use("/api/*", notFoundHandler);
 
-  // Global error handler (must be last)
+  // Global error handler - must be last
   app.use(globalErrorHandler);
 
-  // Vite in dev, static in prod
-  if (env.NODE_ENV === "development") {
+  // Setup Vite or static serving
+  if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // Run server
-  const port = Number(process.env.PORT || 5000);
+  // Always use PORT env var when available, fallback to env.PORT default
+  const port = Number(process.env.PORT ?? env.PORT);
 
   server.listen(
     {
@@ -191,7 +213,7 @@ if (env.NODE_ENV === "production") {
       reusePort: true,
     },
     () => {
-      log(`AgentCraft running on port ${port}`);
+      log(`serving on port ${port}`);
     }
   );
 })();

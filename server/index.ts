@@ -155,7 +155,8 @@ if (isProduction) {
   app.use((req, res, next) => {
     const start = Date.now();
     const path = req.path;
-    let capturedJsonResponse: Record<string, any> | undefined;
+let capturedJsonResponse: Record<string, any> | undefined;
+    
 
     const originalResJson = res.json;
     res.json = function (bodyJson, ...args) {

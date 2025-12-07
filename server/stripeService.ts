@@ -1,42 +1,54 @@
-import { getUncachableStripeClient } from './stripeClient';
-import { stripeStorage } from './stripeStorage';
+import type Stripe from "stripe";
+import { getStripe, stripeRequestOptions } from "./stripeClient";
 
-export class StripeService {
-  async createCustomer(email: string, userId: string) {
-    const stripe = await getUncachableStripeClient();
-    return await stripe.customers.create({
-      email,
-      metadata: { userId },
-    });
-  }
+const stripe = getStripe();
 
-  async createCheckoutSession(customerId: string, priceId: string, successUrl: string, cancelUrl: string) {
-    const stripe = await getUncachableStripeClient();
-    return await stripe.checkout.sessions.create({
-      customer: customerId,
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-    });
-  }
-
-  async createCustomerPortalSession(customerId: string, returnUrl: string) {
-    const stripe = await getUncachableStripeClient();
-    return await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl,
-    });
-  }
-
-  async getProduct(productId: string) {
-    return await stripeStorage.getProduct(productId);
-  }
-
-  async getSubscription(subscriptionId: string) {
-    return await stripeStorage.getSubscription(subscriptionId);
-  }
+// Example domain types – adjust to your needs
+export interface CreateCustomerParams {
+  email: string;
+  name?: string;
+  metadata?: Stripe.MetadataParam;
 }
 
-export const stripeService = new StripeService();
+export async function createCustomer(params: CreateCustomerParams) {
+  const customer = await stripe.customers.create(
+    {
+      email: params.email,
+      name: params.name,
+      metadata: params.metadata,
+    },
+    stripeRequestOptions()
+  );
+
+  return customer;
+}
+
+export interface CreateSubscriptionParams {
+  customerId: string;
+  priceId: string;
+  trialDays?: number;
+}
+
+export async function createSubscription(params: CreateSubscriptionParams) {
+  const subscription = await stripe.subscriptions.create(
+    {
+      customer: params.customerId,
+      items: [{ price: params.priceId }],
+      trial_period_days: params.trialDays,
+      expand: ["latest_invoice.payment_intent"],
+    },
+    stripeRequestOptions()
+  );
+
+  return subscription;
+}
+
+export async function getCustomerById(customerId: string) {
+  return stripe.customers.retrieve(customerId);
+}
+
+// Add more helpers here as you define your billing model:
+// - listProducts / listPrices
+// - createPortalSession
+// - cancelSubscription
+// - etc.

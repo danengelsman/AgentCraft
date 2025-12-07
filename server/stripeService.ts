@@ -3,7 +3,9 @@ import { getStripe, stripeRequestOptions } from "./stripeClient";
 
 const stripe = getStripe();
 
-// Example domain types – adjust to your needs
+/**
+ * Lower-level helpers (can be used directly if needed)
+ */
 export interface CreateCustomerParams {
   email: string;
   name?: string;
@@ -47,8 +49,41 @@ export async function getCustomerById(customerId: string) {
   return stripe.customers.retrieve(customerId);
 }
 
-// Add more helpers here as you define your billing model:
-// - listProducts / listPrices
-// - createPortalSession
-// - cancelSubscription
-// - etc.
+/**
+ * Backwards-compatible service object used in server/routes.ts
+ * (import { stripeService } from "./stripeService")
+ */
+export const stripeService = {
+  async createCustomer(email: string, userId: string) {
+    // Reuse the helper above so logic is in one place
+    return createCustomer({
+      email,
+      metadata: { userId },
+    });
+  },
+
+  async createCheckoutSession(
+    customerId: string,
+    priceId: string,
+    successUrl: string,
+    cancelUrl: string
+  ) {
+    const session = await stripe.checkout.sessions.create(
+      {
+        customer: customerId,
+        mode: "subscription",
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+      },
+      stripeRequestOptions()
+    );
+
+    return session;
+  },
+};

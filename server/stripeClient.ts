@@ -26,3 +26,16 @@ export function stripeRequestOptions(
     ...opts,
   };
 }
+export async function getStripePublishableKey(): Promise<string> {
+  // Try a couple of common env names so it's flexible
+  const key =
+    process.env.STRIPE_PUBLISHABLE_KEY ??
+    process.env.VITE_STRIPE_PUBLISHABLE_KEY ??
+    "";
+
+  if (!key) {
+    throw new Error("Stripe publishable key is not configured");
+  }
+
+  return key;
+}
